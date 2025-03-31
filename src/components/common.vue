@@ -88,26 +88,24 @@ function generateSignature(o, s = "") {
 }
 
 async function requests(method, uri, data = {}) {
+
   const sigin = generateSignature({
     'method': method,
     'url': "/v" + uri,
     'data': data
   }, api_key)
+  let headers = {
+    'content-type': 'application/json',
+    'Authorization': VueCookies.get("authorization"),
+    'authx': sigin
+  }
   if (method === "POST") {
     return await axios.post(uri, data, {
-      headers: {
-        'content-type': 'application/json',
-        'Authorization': VueCookies.get("authorization"),
-        'authx': sigin
-      }
+      headers: headers
     })
   } else {
     return await axios.get(uri, {
-      headers: {
-        'content-type': 'application/json',
-        'Authorization': VueCookies.get("authorization"),
-        'authx': sigin
-      }
+      headers: headers
     })
   }
 

@@ -17,6 +17,7 @@ const dark = ref(false);
 const theme = ref(null);
 const showSaerch = ref(false);
 const data = ref([])
+const MediaDbSum = ref({})
 const ConfigData = ref({})
 const options = ref([
   {
@@ -64,6 +65,27 @@ async function getConfig() {
     localStorage.setItem("title", title)
   }
 }
+
+async function GetMediaDbList(){
+  let api = '/api/v1/mediadb/list'
+  let res = await COMMON.requests("GET", api);
+  if(res.data.code === 0){
+    data.value = res.data.data;
+  }else {
+    instance.$COMMON.ShowMsg(res.data.msg);
+  }
+}
+
+async function GetMediaDbSum(){
+  let api = '/api/v1/mediadb/sum'
+  let res = await COMMON.requests("GET", api);
+  if(res.data.code === 0){
+    MediaDbSum.value = res.data.data;
+  }else {
+    instance.$COMMON.ShowMsg(res.data.msg);
+  }
+}
+
 
 const reF = async () => {
   await getConfig()
@@ -114,8 +136,14 @@ function handleSelect(key) {
 }
 
 onMounted(async () => {
+  // 获取配置
   await getConfig();
+  // 获取用户信息
   await GetUserInfo();
+  // 获取分类列表
+  await GetMediaDbList();
+  // 获取每个分类的数量
+  await GetMediaDbSum();
 
 })
 
@@ -187,14 +215,6 @@ onMounted(async () => {
                           <span class="title">收藏</span>
                         </router-link>
                       </li>
-                      <li>
-                        <router-link to="/played">
-                                                    <span class="icon">
-                                                        <i class='bx bx-detail'></i>
-                                                    </span>
-                          <span class="title">已播放</span>
-                        </router-link>
-                      </li>
                     </ul>
                   </div>
                 </div>
@@ -209,13 +229,14 @@ onMounted(async () => {
                                                         gallery_type: item.category
                                                     }
                                                 }">
-                                                    <span v-if="item.category == 'Movie'" class="icon">
+                                                    <span v-if="item.category === 'Movie'" class="icon">
                                                         <i class='bx bxs-movie'></i>
                                                     </span>
                           <span v-else class="icon">
                                                         <i class='bx bx-desktop'></i>
                                                     </span>
                           <span :data-id="item.gallery_uid" class="title">{{ item.title }}</span>
+                          <span  class="title" style="position: absolute;right: 1em;font-size: 1em;">{{ MediaDbSum[item.guid] }}</span>
                         </router-link>
                       </li>
                     </ul>
@@ -310,7 +331,7 @@ ul li .title,
 }
 
 .title {
-  font-size: 1.4em;
+  font-size: 1.5em;
 }
 
 .content {
@@ -362,8 +383,8 @@ span.n-avatar {
 
 .navigation ul {
   list-style: none;
-  margin: 0px;
-  padding: 0px;
+  margin: 0;
+  padding: 0;
 }
 
 .navigation ul li {
@@ -378,7 +399,6 @@ span.n-avatar {
 
 .navigation ul li a {
   position: relative;
-  display: block;
   width: 100%;
   display: flex;
   text-decoration: none;
@@ -406,7 +426,7 @@ span.n-avatar {
   height: 60px;
   line-height: 60px;
   white-space: nowrap;
-  font-size: 18px;
+  font-size: 1.3em;
 }
 
 .sider-item-title {
