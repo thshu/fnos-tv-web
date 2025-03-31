@@ -4,6 +4,9 @@ import VueCookies from 'vue-cookies';
 import Login from './views/User/Login.vue'
 import {darkTheme} from "naive-ui";
 
+import { useMediaDbData } from './store.js'
+const MediaDbData = useMediaDbData()
+
 // 获取 Vue 实例
 const instance = getCurrentInstance();
 const COMMON = instance.appContext.config.globalProperties.$COMMON;
@@ -18,6 +21,7 @@ const theme = ref(null);
 const showSaerch = ref(false);
 const data = ref([])
 const MediaDbSum = ref({})
+const MediaDbInfo = ref({})
 const ConfigData = ref({})
 const options = ref([
   {
@@ -40,7 +44,6 @@ if (collapsedItem === "true") {
 }
 
 
-
 // 获取用户信息
 async function GetUserInfo() {
   if (VueCookies.get('authorization') !== null) {
@@ -59,31 +62,60 @@ async function GetUserInfo() {
 async function getConfig() {
   let api = '/api/v1/sys/config'
   let res = await COMMON.requests("GET", api);
-  if(res.data.code === 0){
+  if (res.data.code === 0) {
     ConfigData.value = res.data.data;
     title = res.data.data.server_name;
     localStorage.setItem("title", title)
   }
 }
 
-async function GetMediaDbList(){
+async function GetMediaDbList() {
   let api = '/api/v1/mediadb/list'
   let res = await COMMON.requests("GET", api);
-  if(res.data.code === 0){
+  if (res.data.code === 0) {
     data.value = res.data.data;
-  }else {
+    MediaDbData.list = res.data.data;
+  } else {
     instance.$COMMON.ShowMsg(res.data.msg);
   }
 }
 
-async function GetMediaDbSum(){
+async function GetMediaDbSum() {
   let api = '/api/v1/mediadb/sum'
   let res = await COMMON.requests("GET", api);
-  if(res.data.code === 0){
+  if (res.data.code === 0) {
     MediaDbSum.value = res.data.data;
-  }else {
+  } else {
     instance.$COMMON.ShowMsg(res.data.msg);
   }
+}
+
+async function GetMediaDbInfos() {
+  let api = '/api/v1/item/list'
+
+  for (let _d of data.value) {
+    let guid = _d.guid;
+    let _data = {
+      "ancestor_guid": guid,
+      "tags": {
+        "type": [
+          "Movie",
+          "TV",
+          "Directory",
+          "Video"
+        ]
+      },
+      "exclude_grouped_video": 1,
+      "sort_type": MediaDbData.sort_type,
+      "sort_column": MediaDbData.sort_column,
+      "page_size": MediaDbSum.value[guid]
+    }
+    let res = await COMMON.requests("POST", api, _data);
+    MediaDbInfo.value[guid] = res.data.data
+    MediaDbData.info[guid] = res.data.data
+  }
+
+
 }
 
 
@@ -144,6 +176,8 @@ onMounted(async () => {
   await GetMediaDbList();
   // 获取每个分类的数量
   await GetMediaDbSum();
+  // 获取每个分类的列表
+  await GetMediaDbInfos();
 
 })
 
@@ -236,7 +270,8 @@ onMounted(async () => {
                                                         <i class='bx bx-desktop'></i>
                                                     </span>
                           <span :data-id="item.gallery_uid" class="title">{{ item.title }}</span>
-                          <span  class="title" style="position: absolute;right: 1em;font-size: 1em;">{{ MediaDbSum[item.guid] }}</span>
+                          <span class="title"
+                                style="position: absolute;right: 1em;font-size: 1em;">{{ MediaDbSum[item.guid] }}</span>
                         </router-link>
                       </li>
                     </ul>

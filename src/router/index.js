@@ -4,8 +4,13 @@ const routes = [
     {
         path: '/',
         name: 'Home',
-        component: () => import('../views/HelloWorld.vue')
-    }
+        component: () => import('../views/Home.vue')
+    },
+    {
+        path: '/list',
+        name: 'VideoList',
+        component: () => import('../views/Video/VideoList.vue')
+    },
 ]
 const router = createRouter({
     history: createWebHistory(),
