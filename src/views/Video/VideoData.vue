@@ -18,6 +18,7 @@ const siderRef = ref(null);
 const PersonList = ref(null);
 const EpisodeList = ref(null);
 const EpisodeCarouselRef = ref(null);
+const play_item_guid = ref(null);
 
 guid.value = proxy.$route.query.guid
 gallery_type.value = proxy.$route.query.gallery_type
@@ -75,6 +76,11 @@ async function GetEpisodeList(){
       goToSlide(playInfo.value.item.episode_number - 1)
     },10)
   }
+}
+
+async function Play(guid=VideoDataInfo.value.play_item_guid){
+  console.log("播放按钮")
+  console.log(guid)
 }
 
 const onMountedFun = async () => {
@@ -159,7 +165,7 @@ onMounted(async () => {
                                     <span class="button-icon">
                                         <i class='bx bxs-caret-right-circle'></i>
                                     </span>
-                  <span class="button-text" v-if="SeasonData!=null">
+                  <span class="button-text" v-if="playInfo!=null">
                     第 {{ playInfo.item.season_number }} 季 第 {{ playInfo.item.episode_number }} 集
                                     </span>
                   <span class="button-text" v-else>
@@ -206,13 +212,20 @@ onMounted(async () => {
 
         <div v-if="gallery_type === 'season'" class="carousel-container">
           <n-carousel :show-dots="false" :slides-per-view="per_view" :space-between="20" ref="EpisodeCarouselRef" :loop="false" draggable>
-            <div class="view-item" v-for="(item, index) in EpisodeList" :key="index">
+            <div class="view-item" v-for="(item, index) in EpisodeList" :key="item.guid" @mouseenter="play_item_guid = item.guid"
+                 @mouseleave="play_item_guid = null" @click="Play(item.guid)">
+              <div >
                 <img v-if="item.poster.length > 0" loading="lazy" class='gallery-img'
                      :src='COMMON.imgUrl + item.poster' style="border-radius:10px">
                 <img v-else loading="lazy" class='gallery-img' src='/images/not_gellery.png'>
+                <!-- 播放图标 (仅在 hover 时显示) -->
+                <div v-if="play_item_guid === item.guid" class="play-icon">
+                  <i class="bx bx-play"></i>
+                </div>
                 <div class="view-item-title">
                  第 {{ item.episode_number }} 集{{ item.title }}
                 </div>
+              </div>
             </div>
           </n-carousel>
           <!-- 左箭头 -->
@@ -590,4 +603,34 @@ span.button-text {
 .carousel-arrow.right {
   right: 5px;
 }
+
+/* 鼠标悬浮时放大 */
+.view-item:hover .gallery-img {
+  transform: scale(1.05);
+}
+
+/* 播放按钮 */
+.play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 40px;
+  color: white;
+  background: rgba(0, 0, 0, 0.6);
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.3s ease;
+  cursor: pointer;
+}
+
+/* 悬浮时背景变亮 */
+.play-icon:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
 </style>
