@@ -7,7 +7,7 @@ import Snackbar from 'node-snackbar';
 // 定义一些公共的属性和方法
 let title = 'FNOS';
 let apiUrl = "http://fnos.xn--1jqw64a7tu.cn:81/v/api";
-let imgUrl = "https://image.tmdb.org"
+let imgUrl = "https://fnos.xn--1jqw64a7tu.cn:444/v/api/v1/sys/img"
 const isMo = /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent);
 
 let api_key = "16CCEB3D-AB42-077D-36A1-F355324E4237"

@@ -6,12 +6,18 @@ const instance = getCurrentInstance();
 const proxy = instance.appContext.config.globalProperties;
 const COMMON = proxy.$COMMON;
 
+const per_view = ref(5);
+
 const guid = ref(null);
 const gallery_type = ref(null);
 const VideoDataInfo = ref({})
 const SeasonData = ref(null)
 const playInfo = ref(null)
 const backImg = ref(null)
+const siderRef = ref(null);
+const PersonList = ref(null);
+const EpisodeList = ref(null);
+const EpisodeCarouselRef = ref(null);
 
 guid.value = proxy.$route.query.guid
 gallery_type.value = proxy.$route.query.gallery_type
@@ -20,10 +26,13 @@ gallery_type.value = proxy.$route.query.gallery_type
 async function GetVideoData() {
   let api = "/api/v1/item/" + guid.value;
   let res = await COMMON.requests("GET", api)
-  console.log(res)
   if (res.data.code === 0) {
     VideoDataInfo.value = res.data.data;
-    backImg.value = "http://fnos.xn--1jqw64a7tu.cn:81/v/api/v1/sys/img/92/17/" + res.data.data.backdrops + "?w=200"
+    if (res.data.data.backdrops !== undefined) {
+      backImg.value = COMMON.imgUrl + "/92/17/" + res.data.data.backdrops + "?w=200"
+    } else {
+      backImg.value = COMMON.imgUrl + "/92/17/" + VideoDataInfo.value.posters + "?w=200"
+    }
   }
 }
 
@@ -48,27 +57,68 @@ async function GetPayInfo() {
   }
 }
 
+async function GetPersonList() {
+  let api = "/api/v1/person/list/" + guid.value;
+  let res = await COMMON.requests("POST", api)
+  if (res.data.code === 0) {
+    PersonList.value = res.data.data.list.filter(o => o.role !== "");
+  }
+}
+
+async function GetEpisodeList(){
+  let api = "/api/v1/episode/list/" + guid.value;
+  let res = await COMMON.requests("GET", api)
+  if (res.data.code === 0) {
+    EpisodeList.value = res.data.data;
+    // 滚动到当前观看集
+    setTimeout(function (){
+      goToSlide(playInfo.value.item.episode_number - 1)
+    },10)
+  }
+}
+
 const onMountedFun = async () => {
   // 获取剧集详情
   await GetVideoData();
   await GetPayInfo();
-  console.log(playInfo.value)
   // 获取剧集
   if (gallery_type.value === "TV") {
     await GetSeasonData();
   }
+  if (gallery_type.value !== 'TV') {
+    await GetPersonList();
+  }
+  if(gallery_type.value === 'season'){
+    await GetEpisodeList()
+  }
+};
+
+
+// 下一张
+const goNext = () => {
+  let _index = EpisodeCarouselRef.value.getCurrentIndex();
+  EpisodeCarouselRef.value?.to(_index + per_view.value);
+};
+
+// 上一张
+const goPrev = () => {
+  let _index = EpisodeCarouselRef.value.getCurrentIndex();
+  EpisodeCarouselRef.value?.to(_index - per_view.value);
+};
+
+// 跳转到指定索引（例如第二张图，索引从 0 开始）
+const goToSlide = (index) => {
+  EpisodeCarouselRef.value?.to(index);
 };
 
 onBeforeRouteUpdate(async (to, from) => {
   guid.value = to.query.guid;
-  // gallery_type.value = to.query.gallery_type;
+  gallery_type.value = to.query.gallery_type
   await onMountedFun();
 });
 
 onMounted(async () => {
   await onMountedFun();
-
-
 })
 
 
@@ -82,13 +132,15 @@ onMounted(async () => {
       <div class="mainColumn">
         <div class="view-scroller">
           <div class="view-card-image">
-            <img :src='"http://fnos.xn--1jqw64a7tu.cn:81/v/api/v1/sys/img/92/17/"+VideoDataInfo.posters + "?w=200"'
+            <img :src='COMMON.imgUrl + "/92/17/"+VideoDataInfo.posters + "?w=200"'
                  alt="">
           </div>
           <div class="view-card-detail detailTextContainer">
             <div class="lex-direction-column">
               <div class="itemPrimaryNameContainer">
-                <h1 class="itemName-primary">{{ gallery_type === "tv" ? VideoDataInfo.name : VideoDataInfo.title }}</h1>
+                <h1 class="itemName-primary">{{
+                    gallery_type === "tv" ? VideoDataInfo.name : VideoDataInfo.tv_title + " " + VideoDataInfo.title
+                  }}</h1>
               </div>
               <div class="mediaInfo">
                 <div class="mediaInfoItem">
@@ -132,13 +184,13 @@ onMounted(async () => {
               <div class="show-card-list">
                 <div class="show-card-item" v-for="(item, index) in SeasonData" :key="index">
                   <router-link :to="{
-                                        path: '/season', query: {
-                                            id: item.guid,
-                                            gallery_type: gallery_type
+                                        path: '/video', query: {
+                                            guid: item.guid,
+                                            gallery_type: 'season'
                                         }
                                     }">
                     <div class="show-img">
-                      <img :src='"http://fnos.xn--1jqw64a7tu.cn:81/v/api/v1/sys/img/"+item.poster + "?w=200"'
+                      <img :src='COMMON.imgUrl + item.poster + "?w=200"'
                            alt="">
                     </div>
                   </router-link>
@@ -147,6 +199,61 @@ onMounted(async () => {
                   </div>
                 </div>
 
+              </div>
+            </div>
+          </n-scrollbar>
+        </div>
+
+        <div v-if="gallery_type === 'season'" class="carousel-container">
+          <n-carousel :show-dots="false" :slides-per-view="per_view" :space-between="20" ref="EpisodeCarouselRef" :loop="false" draggable>
+            <div class="view-item" v-for="(item, index) in EpisodeList" :key="index">
+                <img v-if="item.poster.length > 0" loading="lazy" class='gallery-img'
+                     :src='COMMON.imgUrl + item.poster' style="border-radius:10px">
+                <img v-else loading="lazy" class='gallery-img' src='/images/not_gellery.png'>
+                <div class="view-item-title">
+                 第 {{ item.episode_number }} 集{{ item.title }}
+                </div>
+            </div>
+          </n-carousel>
+          <!-- 左箭头 -->
+          <button class="carousel-arrow left" @click="goPrev">‹</button>
+
+          <!-- 右箭头 -->
+          <button class="carousel-arrow right" @click="goNext">›</button>
+        </div>
+
+        <div class="showContainer" v-if="gallery_type !== 'TV'">
+          <div class="show-header">
+            <div class="show-title">
+              <h3>演职人员</h3>
+            </div>
+<!--            <div class="show-header-tool">-->
+<!--              <n-space>-->
+<!--                <n-button @click="siderRef?.scrollBy({ left: -left })" circle>-->
+<!--                  <i class='bx bx-chevron-left'></i>-->
+<!--                </n-button>-->
+<!--                <n-button @click="siderRef?.scrollBy({ left: left })" circle>-->
+<!--                  <i class='bx bx-chevron-right'></i>-->
+<!--                </n-button>-->
+<!--              </n-space>-->
+<!--            </div>-->
+          </div>
+          <n-scrollbar ref="siderRef" x-scrollable>
+            <div style="white-space: nowrap;">
+              <div class="show-card-list">
+                <div class="show-card-item" v-for="(item, index) in PersonList" :key="index">
+                  <router-link :to="{ path: '/person', query: { id: item.id, } }">
+                    <div class="show-img">
+                      <img v-if="item.profile_path!==''" loading="lazy"
+                           :src='COMMON.imgUrl + "/t/p/w220_and_h330_face/" + item.profile_path'
+                           alt="">
+                      <img v-else loading="lazy" src="/images/not_person.jpg" alt="">
+                    </div>
+                  </router-link>
+                  <div class="show-name">
+                    {{ item.name }}
+                  </div>
+                </div>
               </div>
             </div>
           </n-scrollbar>
@@ -445,5 +552,42 @@ span.button-text {
     width: 65%;
     margin: 0 auto;
   }
+}
+
+
+/* 轮播容器，确保箭头在正确位置 */
+.carousel-container {
+  position: relative;
+  width: 100%;
+}
+
+/* 左右箭头按钮 */
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  font-size: 24px;
+  padding: 10px 15px;
+  cursor: pointer;
+  z-index: 10;
+  border-radius: 50%;
+  transition: background 0.3s ease;
+}
+
+.carousel-arrow:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* 左箭头位置 */
+.carousel-arrow.left {
+  left: 5px;
+}
+
+/* 右箭头位置 */
+.carousel-arrow.right {
+  right: 5px;
 }
 </style>
