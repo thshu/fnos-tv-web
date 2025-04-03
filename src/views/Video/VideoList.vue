@@ -13,12 +13,45 @@ const showSort = ref(false);
 const size = ref(48);
 const page = ref(1);
 const MediaDbInfo = ref(null);
+const mode = ref("create_time");
+const order = ref("DESC");
 
 
 const instance = getCurrentInstance();
 const proxy = instance.appContext.config.globalProperties;
 const COMMON = proxy.$COMMON;
 guid.value = proxy.$route.query.gallery_uid
+
+
+const modes = [
+  {
+    value: 'sort_title',
+    label: '标题'
+  },
+  {
+    value: 'vote_average',
+    label: '评分'
+  },
+  {
+    value: 'release_date',
+    label: '发行年份'
+  },
+  {
+    value: 'create_time',
+    label: '添加日期'
+  }
+]
+
+const orders = [
+  {
+    value: "ASC",
+    label: "升序"
+  },
+  {
+    value: 'DESC',
+    label: '降序'
+  }
+]
 
 
 async function GetMediaDbInfos() {
@@ -42,6 +75,25 @@ async function GetMediaDbInfos() {
   let res = await COMMON.requests("POST", api, _data);
   MediaDbInfo.value = res.data.data.list
 
+}
+
+async function handleChange(e) {
+  page.value = 1;
+  await GetMediaDbInfos();
+}
+
+async function BackPage() {
+  this.page = this.page - 1;
+  if (this.page <= 0) {
+    COMMON.ShowMsg("已经是第1页啦!")
+    this.page = 1;
+  }
+  await GetMediaDbInfos();
+}
+
+async function NextPage() {
+  this.page = this.page + 1;
+  await GetMediaDbInfos();
 }
 
 onBeforeRouteUpdate(async (to, from) => {
@@ -99,7 +151,7 @@ onMounted(async () => {
               </div>
             </div>
           </div>
-          <img v-if="item.poster != undefined" loading="lazy" class="carousel-img"
+          <img v-if="item.poster !== undefined" loading="lazy" class="carousel-img"
                :src='"http://fnos.xn--1jqw64a7tu.cn:81/v/api/v1/sys/img/92/17/"+item.poster + "?w=200"'>
           <img v-else loading="lazy" class='carousel-img' src='/images/not_video.jpg'>
           <div class="view-item-title">
