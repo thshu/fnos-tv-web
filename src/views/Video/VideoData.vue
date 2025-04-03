@@ -19,6 +19,7 @@ const PersonList = ref(null);
 const EpisodeList = ref(null);
 const EpisodeCarouselRef = ref(null);
 const play_item_guid = ref(null);
+const play_guid = ref(null)
 
 guid.value = proxy.$route.query.guid
 gallery_type.value = proxy.$route.query.gallery_type
@@ -34,6 +35,7 @@ async function GetVideoData() {
     } else {
       backImg.value = COMMON.imgUrl + "/92/17/" + VideoDataInfo.value.posters + "?w=200"
     }
+    // play_guid.value = VideoDataInfo.value.type === "Movie"?VideoDataInfo.value.guid:  VideoDataInfo.value.play_item_guid
   }
 }
 
@@ -55,6 +57,7 @@ async function GetPayInfo() {
   let res = await COMMON.requests("POST", api, _data)
   if (res.data.code === 0) {
     playInfo.value = res.data.data;
+    play_guid.value = playInfo.value.item.guid;
   }
 }
 
@@ -78,7 +81,7 @@ async function GetEpisodeList(){
   }
 }
 
-async function Play(guid=VideoDataInfo.value.play_item_guid){
+async function Play(guid=play_guid.value){
   console.log("播放按钮")
   console.log(guid)
 }
@@ -165,7 +168,7 @@ onMounted(async () => {
                                     <span class="button-icon">
                                         <i class='bx bxs-caret-right-circle'></i>
                                     </span>
-                  <span class="button-text" v-if="playInfo!=null">
+                  <span class="button-text" v-if="playInfo!=null && gallery_type === 'TV'">
                     第 {{ playInfo.item.season_number }} 季 第 {{ playInfo.item.episode_number }} 集
                                     </span>
                   <span class="button-text" v-else>
