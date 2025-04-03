@@ -11,6 +11,11 @@ const routes = [
         name: 'VideoList',
         component: () => import('../views/Video/VideoList.vue')
     },
+    {
+        path: '/video',
+        name: 'VideoData',
+        component: () => import('../views/video/VideoData.vue')
+    }
 ]
 const router = createRouter({
     history: createWebHistory(),

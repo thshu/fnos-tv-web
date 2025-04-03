@@ -7,14 +7,12 @@ import {onBeforeRouteUpdate} from "vue-router";
 const MediaDbData = useMediaDbData()
 
 const guid = ref(null);
-const sort_column = MediaDbData.sort_column;
-const sort_type = MediaDbData.sort_type;
+const mode = MediaDbData.sort_column;
+const order = MediaDbData.sort_type;
 const showSort = ref(false);
 const size = ref(48);
 const page = ref(1);
 const MediaDbInfo = ref(null);
-const mode = ref("create_time");
-const order = ref("DESC");
 
 
 const instance = getCurrentInstance();
@@ -77,7 +75,7 @@ async function GetMediaDbInfos() {
 
 }
 
-async function handleChange(e) {
+async function handleChange() {
   page.value = 1;
   await GetMediaDbInfos();
 }
@@ -135,7 +133,7 @@ onMounted(async () => {
       <div class="view-item" v-for="item in MediaDbInfo">
         <router-link :to="{
                     path: '/video', query: {
-                        id: item.guid,
+                        guid: item.guid,
                         gallery_type: item.type
                     }
                 }">

@@ -36,7 +36,7 @@ const per_card = ref(8);
               </div>
               <router-link :to="{
                                 path: '/video', query: {
-                                    id: item.guid,
+                                    guid: item.guid,
                                     gallery_type: item.type
                                 }
                             }">
