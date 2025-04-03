@@ -15,6 +15,11 @@ const routes = [
         path: '/video',
         name: 'VideoData',
         component: () => import('../views/video/VideoData.vue')
+    },
+    {
+        path: '/player',
+        name: 'VideoPlayer',
+        component: () => import('../views/Play/VideoPlayer.vue')
     }
 ]
 const router = createRouter({

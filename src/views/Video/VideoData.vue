@@ -69,21 +69,29 @@ async function GetPersonList() {
   }
 }
 
-async function GetEpisodeList(){
+async function GetEpisodeList() {
   let api = "/api/v1/episode/list/" + guid.value;
   let res = await COMMON.requests("GET", api)
   if (res.data.code === 0) {
     EpisodeList.value = res.data.data;
     // 滚动到当前观看集
-    setTimeout(function (){
+    setTimeout(function () {
       goToSlide(playInfo.value.item.episode_number - 1)
-    },10)
+    }, 10)
   }
 }
 
-async function Play(guid=play_guid.value){
+async function Play(_guid = play_guid.value) {
   console.log("播放按钮")
   console.log(guid)
+  proxy.$router.push({
+    path: "/player",
+    query: {
+      gallery_type: gallery_type.value,
+      guid: guid.value,
+      episode_guid: _guid
+    }
+  })
 }
 
 const onMountedFun = async () => {
@@ -97,7 +105,7 @@ const onMountedFun = async () => {
   if (gallery_type.value !== 'TV') {
     await GetPersonList();
   }
-  if(gallery_type.value === 'season'){
+  if (gallery_type.value === 'season') {
     await GetEpisodeList()
   }
 };
@@ -214,10 +222,12 @@ onMounted(async () => {
         </div>
 
         <div v-if="gallery_type === 'season'" class="carousel-container">
-          <n-carousel :show-dots="false" :slides-per-view="per_view" :space-between="20" ref="EpisodeCarouselRef" :loop="false" draggable>
-            <div class="view-item" v-for="(item, index) in EpisodeList" :key="item.guid" @mouseenter="play_item_guid = item.guid"
+          <n-carousel :show-dots="false" :slides-per-view="per_view" :space-between="20" ref="EpisodeCarouselRef"
+                      :loop="false" draggable>
+            <div class="view-item" v-for="(item, index) in EpisodeList" :key="item.guid"
+                 @mouseenter="play_item_guid = item.guid"
                  @mouseleave="play_item_guid = null" @click="Play(item.guid)">
-              <div >
+              <div>
                 <img v-if="item.poster.length > 0" loading="lazy" class='gallery-img'
                      :src='COMMON.imgUrl + item.poster' style="border-radius:10px">
                 <img v-else loading="lazy" class='gallery-img' src='/images/not_gellery.png'>
@@ -226,7 +236,7 @@ onMounted(async () => {
                   <i class="bx bx-play"></i>
                 </div>
                 <div class="view-item-title">
-                 第 {{ item.episode_number }} 集{{ item.title }}
+                  第 {{ item.episode_number }} 集{{ item.title }}
                 </div>
               </div>
             </div>
@@ -243,16 +253,16 @@ onMounted(async () => {
             <div class="show-title">
               <h3>演职人员</h3>
             </div>
-<!--            <div class="show-header-tool">-->
-<!--              <n-space>-->
-<!--                <n-button @click="siderRef?.scrollBy({ left: -left })" circle>-->
-<!--                  <i class='bx bx-chevron-left'></i>-->
-<!--                </n-button>-->
-<!--                <n-button @click="siderRef?.scrollBy({ left: left })" circle>-->
-<!--                  <i class='bx bx-chevron-right'></i>-->
-<!--                </n-button>-->
-<!--              </n-space>-->
-<!--            </div>-->
+            <!--            <div class="show-header-tool">-->
+            <!--              <n-space>-->
+            <!--                <n-button @click="siderRef?.scrollBy({ left: -left })" circle>-->
+            <!--                  <i class='bx bx-chevron-left'></i>-->
+            <!--                </n-button>-->
+            <!--                <n-button @click="siderRef?.scrollBy({ left: left })" circle>-->
+            <!--                  <i class='bx bx-chevron-right'></i>-->
+            <!--                </n-button>-->
+            <!--              </n-space>-->
+            <!--            </div>-->
           </div>
           <n-scrollbar ref="siderRef" x-scrollable>
             <div style="white-space: nowrap;">
