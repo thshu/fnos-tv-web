@@ -97,15 +97,7 @@ const setting = ref({
   moreVideoAttr: {
     crossOrigin: 'anonymous',
   },
-  settings: [
-    {
-      html: 'quality',
-      width: 150,
-      tooltip: '原画质',
-      selector: qualitySelector,
-      onSelect: switchQuality,
-    }
-  ],
+  settings: [],
   controls: [
     // {
     //     position: 'right',
@@ -182,6 +174,15 @@ const setting = ref({
     // artplayerPluginDanmuku(danmu_setting)
   ],
 })
+
+const ArtplayerStyle = {
+  width: '100%',
+  // 用 vw 单位保持 16:9：100vw * 9 / 16 = 56.25vw
+  height: '56.25vw',
+  // 可选：不让它超过视口高度，避免滚动
+  maxHeight: 'calc(100vh - 150px)',
+  margin: '0 auto',
+}
 
 async function switchQuality(item, $dom, event) {
 
@@ -387,7 +388,6 @@ onBeforeRouteUpdate(async (to, from) => {
 });
 
 onBeforeRouteLeave((to, from) => {
-  document.title = proxy.COMMON.title;
   for (var t of timerList.value) {
     clearInterval(t);
   }
@@ -404,154 +404,13 @@ onMounted(async () => {
 <template>
   <div v-if="loading" class="load"></div>
   <div v-else class="content">
-    <n-grid cols="12" x-gap="16" item-responsive responsive="screen">
+    <n-grid cols="1" item-responsive responsive="screen">
       <n-grid-item span="12 m:12 l:9 xl:9 2xl:9">
         <div class="player">
-          <Artplayer class="art-player" @get-instance="getInstance" :option="setting"/>
-        </div>
-        <div class="showContainer">
-          <div class="data-header">
-            <div class="header-left">
-              <div class="season-title">
-                {{ playInfo.title }}
-              </div>
-            </div>
-            <div class="header-right">
-              <n-button @click="showModal = !showModal" strong secondary circle>
-                <i class='bx bx-dots-vertical-rounded'></i>
-              </n-button>
-            </div>
-          </div>
-          <div class="data-content">
-            <div class="star">
-              评分：{{
-                isNaN(Math.floor(playInfo.vote_average * 100) / 100) ?
-                    "" :
-                    Math.floor(playInfo.vote_average * 100) / 100
-              }}
-            </div>
-            <div class="yaer">
-              <p> 发行时间：{{ playInfo.release_date }}</p>
-            </div>
-            <div class="overview-text">
-              简介：
-              <p>{{ playInfo.overview }}</p>
-            </div>
-          </div>
-        </div>
-
-      </n-grid-item>
-
-      // 分集
-      <n-grid-item span="0 m:0 l:3 xl:3 2xl:3">
-        <div class="show_like" v-if="EpisodeList != null">
-          <div class="show-header">
-            <div class="show-title">
-              <h3>分集</h3>
-            </div>
-          </div>
-          <n-scrollbar style="max-height: 63vh">
-            <div class="episode-card-list">
-              <div class="episode-card-item" v-for="(item, index) in EpisodeList" :key="index">
-                <div class="episode-img">
-                  <img loading="lazy" :src='COMMON.imgUrl + "/"+item.poster + "?w=200"'
-                       alt="">
-                </div>
-                <div class="episode-content">
-                  <div class="episode-name">
-                    第 {{ item.episode_number }} 集
-                  </div>
-                  <div class="episode-overview">
-                    {{ item.overview }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </n-scrollbar>
+          <Artplayer class="art-player" @get-instance="getInstance" :option="setting" :style="ArtplayerStyle"/>
         </div>
       </n-grid-item>
     </n-grid>
-    <n-modal transform-origin="center" v-model:show="showModal">
-      <n-card style="width: 600px" title="外部播放器" :bordered="false" size="huge" role="dialog" aria-modal="true">
-        <template #header-extra>
-          <n-button @click="showModal = !showModal" strong secondary circle>
-            <i class='bx bx-x'></i>
-          </n-button>
-        </template>
-        <ul class="play-list">
-          <li class="play-item">
-            <a :href="'iina://weblink/?url=' + urlBase" target="_blank">
-              <n-tooltip trigger="hover">
-                <template #trigger>
-                  <img class="play-icon" src="/images/iina.webp" alt="">
-                </template>
-                IINA
-              </n-tooltip>
-            </a>
-          </li>
-          <li class="play-item">
-            <a :href="'potplayer://' + urlBase" target="_blank">
-              <n-tooltip trigger="hover">
-                <template #trigger>
-                  <img class="play-icon" src="/images/potplayer.webp" alt="">
-                </template>
-                Potplayer
-              </n-tooltip>
-            </a>
-          </li>
-          <li class="play-item">
-            <a :href="'vlc://' + urlBase" target="_blank">
-              <n-tooltip trigger="hover">
-                <template #trigger>
-                  <img class="play-icon" src="/images/vlc.webp" alt="">
-                </template>
-                vcl
-              </n-tooltip>
-            </a>
-          </li>
-          <li class="play-item">
-            <a :href="'nplayer-' + urlBase" target="_blank">
-              <n-tooltip trigger="hover">
-                <template #trigger>
-                  <img class="play-icon" src="/images/nplayer.webp" alt="">
-                </template>
-                nplayer
-              </n-tooltip>
-            </a>
-          </li>
-          <li class="play-item">
-            <a :href="'infuse://x-callback-url/play?url=' + urlBase" target="_blank">
-              <n-tooltip trigger="hover">
-                <template #trigger>
-                  <img class="play-icon" src="/images/infuse.webp" alt="">
-                </template>
-                infuse
-              </n-tooltip>
-            </a>
-          </li>
-          <li class="play-item">
-            <a :href="'intent:' + urlBase" target="_blank">
-              <n-tooltip trigger="hover">
-                <template #trigger>
-                  <img class="play-icon" src="/images/mxplayer.webp" alt="">
-                </template>
-                Mxplayer
-              </n-tooltip>
-            </a>
-          </li>
-          <li class="play-item">
-            <a :href="'intent:' + urlBase" target="_blank">
-              <n-tooltip trigger="hover">
-                <template #trigger>
-                  <img class="play-icon" src="/images/mxplayer-pro.webp" alt="">
-                </template>
-                Mxplayer-Pro
-              </n-tooltip>
-            </a>
-          </li>
-        </ul>
-      </n-card>
-    </n-modal>
   </div>
 </template>
 

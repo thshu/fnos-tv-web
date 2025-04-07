@@ -16,7 +16,7 @@ let UserInfo = ref({})
 let load = ref(true)
 let title = COMMON.title
 document.title = title;
-const collapsed = ref(false);
+let collapsed = ref(false);
 const dark = ref(false);
 const theme = ref(null);
 const showSaerch = ref(false);
@@ -130,9 +130,8 @@ function LoginUser() {
 }
 
 function toggDrawer() {
-  this.collapsed = !this.collapsed;
-  isLogin = !isLogin
-  VueCookies.set("collapsed", this.collapsed);
+  collapsed.value = !collapsed.value;
+  VueCookies.set("collapsed", collapsed);
 }
 
 function Home() {
