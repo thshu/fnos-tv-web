@@ -5,6 +5,7 @@ import {getCurrentInstance, onMounted, ref} from "vue";
 
 import Artplayer from "./ArtPlayer.vue";
 import {onBeforeRouteLeave, onBeforeRouteUpdate} from "vue-router";
+import artplayerPluginDanmuku from "artplayer-plugin-danmuku";
 
 const instance = getCurrentInstance();
 const proxy = instance.appContext.config.globalProperties;
@@ -29,6 +30,31 @@ const qualitySelector = ref([]);
 guid.value = proxy.$route.query.guid
 episode_guid.value = proxy.$route.query.episode_guid
 gallery_type.value = proxy.$route.query.gallery_type
+
+var danmu_setting = window.localStorage.danmu_setting;
+if (danmu_setting === undefined) {
+  danmu_setting = JSON.stringify({
+    value: {
+      speed: 8.5, // 弹幕持续时间，单位秒，范围在[1 ~ 10]
+      opacity: 0.5, // 弹幕透明度，范围在[0 ~ 1]
+      fontSize: '3%', // 字体大小，支持数字和百分比
+      color: '#FFFFFF', // 默认字体颜色
+      mode: 0, // 默认模式，0-滚动，1-静止
+      margin: [10, '75%'], // 弹幕上下边距，支持数字和百分比
+      antiOverlap: true, // 是否防重叠
+      useWorker: true, // 是否使用 web worker
+      synchronousPlayback: true, // 是否同步到播放速度
+      theme: 'light', // 输入框自定义挂载时的主题色，默认为 dark，可以选填亮色 light
+      heatmap: false, // 是否开启弹幕热度图, 默认为 false
+      beforeEmit: (danmu) => !!danmu.text.trim(), // 发送弹幕前的自定义校验，返回 true 则可以发送
+      emitter: false,
+      mount: undefined
+
+    }
+  })
+
+}
+danmu_setting = JSON.parse(danmu_setting).value
 
 const setting = ref({
   url: "",
@@ -116,52 +142,7 @@ const setting = ref({
     //     },
     // }
 
-    {
-      name: '倍速',
-      position: 'right',
-      html: '倍速',
-      selector: [
-        {
-          html: 0.5,
-        },
-        {
-          html: 0.8,
-        },
-        {
-          html: 1,
-        }, {
-          html: 1.2,
-        }, {
-          html: 1.5,
-        }, {
-          html: 1.8,
-        }, {
-          html: 2,
-        }, {
-          html: 2.5,
-        }, {
-          html: 2.8,
-        }, {
-          html: 3,
-        },
-      ],
-      onSelect: function (item, $dom) {
-        art.playbackRate = item.html;
-        return `${item.html}`;
-      },
-    },
-    {
-      position: 'left',
-      index: 11,
-      html: '<img width="22" heigth="22" src="./images/next.svg">',
-      tooltip: '下一集',
-      style: {
-        color: 'green',
-      },
-      click: function () {
-        play_next()
-      },
-    }
+
   ],
   quality: [],
   icons: {
@@ -170,8 +151,7 @@ const setting = ref({
     indicator: '<img width="16" heigth="16" src="./images/indicator.svg">',
   },
   plugins: [
-    //   artplayerPluginControl(),
-    // artplayerPluginDanmuku(danmu_setting)
+    artplayerPluginDanmuku(danmu_setting)
   ],
 })
 
@@ -184,6 +164,7 @@ const ArtplayerStyle = {
   margin: '0 auto',
 }
 
+// 切换清晰度
 async function switchQuality(item, $dom, event) {
 
 }
@@ -276,18 +257,81 @@ async function GetPalyUrl() {
   let res = await COMMON.requests("POST", api, _data)
   if (res.data.code === 0) {
     urlBase.value = res.data.data.play_link;
-    url.value = "http://fnos.xn--1jqw64a7tu.cn:81" + res.data.data.play_link;
+    url.value = COMMON.fnHost + res.data.data.play_link;
   }
-
 }
 
-async function UpdateControl(){
+async function addArtConfig(_art, key, v) {
+  try {
+    _art[key].remove(v.name)
+  } catch (err) {
+  }
+  _art[key].add(v)
+}
 
+async function UpdateControl(_art) {
+  console.log(1)
+
+  let 倍速 = {
+    name: '倍速',
+    position: 'right',
+    html: '倍速',
+    selector: [
+      {
+        html: 0.5,
+      },
+      {
+        html: 0.8,
+      },
+      {
+        html: 1,
+      }, {
+        html: 1.2,
+      }, {
+        html: 1.5,
+      }, {
+        html: 1.8,
+      }, {
+        html: 2,
+      }, {
+        html: 2.5,
+      }, {
+        html: 2.8,
+      }, {
+        html: 3,
+      },
+    ],
+    onSelect: function (item, $dom) {
+      art.playbackRate = item.html;
+      return `${item.html}`;
+    },
+  }
+  let 下一集 = {
+    name: '下一集',
+    position: 'left',
+    index: 11,
+    html: '<img width="22" heigth="22" src="./images/next.svg">',
+    tooltip: '下一集',
+    style: {
+      color: 'green',
+    },
+    click: function () {
+      play_next()
+    }
+  }
+  for (let item of [倍速, 下一集]) {
+    await addArtConfig(_art, 'controls', item)
+  }
+}
+
+async function GetDanMuUrl(){
+  let video_path = StreamList.value.data.files[0].path;
 }
 
 
 async function ready() {
   art.seek = playInfo.value.watched_ts
+  await UpdateControl(art);
 }
 
 const artF = async (data) => {
@@ -372,7 +416,6 @@ async function getInstance(_art) {
   art = _art;
   art.id = episode_guid.value
   art.url = url.value
-  console.log(1)
 }
 
 const onMountedFun = async () => {
