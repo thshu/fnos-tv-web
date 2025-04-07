@@ -164,6 +164,13 @@ const ArtplayerStyle = {
   margin: '0 auto',
 }
 
+const loadDanmuku = () => () => new Promise(resolve => {
+  let danmuku = "/danmu/get?douban_id=" + playInfo.value.douban_id;
+  fetch(danmuku)
+      .then(res => res.json())
+      .then(json => resolve(json))
+})
+
 // 切换清晰度
 async function switchQuality(item, $dom, event) {
 
@@ -324,14 +331,12 @@ async function UpdateControl(_art) {
   }
 }
 
-async function GetDanMuUrl(){
-  let video_path = StreamList.value.data.files[0].path;
-}
-
 
 async function ready() {
   art.seek = playInfo.value.watched_ts
   await UpdateControl(art);
+  art.plugins.artplayerPluginDanmuku.reset();
+  art.plugins.artplayerPluginDanmuku.load(loadDanmuku());
 }
 
 const artF = async (data) => {
