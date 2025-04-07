@@ -4,7 +4,8 @@ import VueCookies from 'vue-cookies';
 import Login from './views/User/Login.vue'
 import {darkTheme} from "naive-ui";
 
-import { useMediaDbData } from './store.js'
+import {useMediaDbData} from './store.js'
+
 const MediaDbData = useMediaDbData()
 
 // 获取 Vue 实例
@@ -76,7 +77,7 @@ async function GetMediaDbList() {
     data.value = res.data.data;
     MediaDbData.list = res.data.data;
   } else {
-    instance.$COMMON.ShowMsg(res.data.msg);
+    COMMON.ShowMsg(res.data.msg);
   }
 }
 
@@ -86,7 +87,7 @@ async function GetMediaDbSum() {
   if (res.data.code === 0) {
     MediaDbSum.value = res.data.data;
   } else {
-    instance.$COMMON.ShowMsg(res.data.msg);
+    COMMON.ShowMsg(res.data.msg);
   }
 }
 
@@ -120,10 +121,11 @@ async function GetMediaDbInfos() {
 
 
 const reF = async () => {
-  await getConfig()
+  await onMountedFun();
 };
 
 function LoginUser() {
+  isLogin.value = true;
   reF();
 }
 
@@ -167,18 +169,26 @@ function handleSelect(key) {
   }
 }
 
-onMounted(async () => {
+async function onMountedFun() {
   // 获取配置
   await getConfig();
-  // 获取用户信息
-  await GetUserInfo();
-  // 获取分类列表
-  await GetMediaDbList();
-  // 获取每个分类的数量
-  await GetMediaDbSum();
-  // 获取每个分类的列表
-  await GetMediaDbInfos();
+  if (VueCookies.get("authorization") !== null) {
+    // 获取用户信息
+    await GetUserInfo();
+    // 获取分类列表
+    await GetMediaDbList();
+    // 获取每个分类的数量
+    await GetMediaDbSum();
+    // 获取每个分类的列表
+    await GetMediaDbInfos();
+  } else {
+    isLogin.value = false;
+  }
+  load.value = false;
+}
 
+onMounted(async () => {
+  await onMountedFun();
 })
 
 </script>
