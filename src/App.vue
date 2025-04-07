@@ -15,7 +15,6 @@ let isLogin = ref(false)
 let UserInfo = ref({})
 let load = ref(true)
 let title = COMMON.title
-document.title = title;
 let collapsed = ref(false);
 const dark = ref(false);
 const theme = ref(null);
@@ -183,6 +182,7 @@ async function onMountedFun() {
   } else {
     isLogin.value = false;
   }
+  document.title = title;
   load.value = false;
 }
 

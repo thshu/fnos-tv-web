@@ -281,6 +281,11 @@ async function GetPalyUrl() {
 
 }
 
+async function UpdateControl(){
+
+}
+
+
 async function ready() {
   art.seek = playInfo.value.watched_ts
 }
