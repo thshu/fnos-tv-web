@@ -270,27 +270,34 @@ async function GetPalyUrl() {
 }
 
 async function SendPlayRecord() {
-  let api = "/api/v1/play/record"
-  let data = {
-    "item_guid": episode_guid.value,
-    "media_guid": StreamList.value.video_streams[0].media_guid,
-    "video_guid": StreamList.value.video_streams[0].guid,
-    "audio_guid": StreamList.value.audio_streams[0].guid,
-    "subtitle_guid": "",
-    "resolution": QualityData.value[0].resolution,
-    "bitrate": QualityData.value[0].bitrate,
-    "ts": Math.floor(art.currentTime),
-    "duration": art.duration,
-    "play_link": urlBase.value
+  if (art.currentTime >= 5) {
+    let api = "/api/v1/play/record"
+    let data = {
+      "item_guid": episode_guid.value,
+      "media_guid": StreamList.value.video_streams[0].media_guid,
+      "video_guid": StreamList.value.video_streams[0].guid,
+      "audio_guid": StreamList.value.audio_streams[0].guid,
+      "subtitle_guid": "",
+      "resolution": QualityData.value[0].resolution,
+      "bitrate": QualityData.value[0].bitrate,
+      "ts": Math.floor(art.currentTime),
+      "duration": art.duration,
+      "play_link": urlBase.value
+    }
+    let res = await COMMON.requests("POST", api, data)
   }
-  let res = await COMMON.requests("POST", api, data)
 }
 
-async function GetEmoji(){
-  let api = "/danmu/getEmoji?douban_id=" + playInfo.value.douban_id
-  let res = await fetch(api)
-  let res_json = await res.json()
-  emojos.value = res_json
+async function GetEmoji() {
+  try {
+    let api = "/danmu/getEmoji?douban_id=" + playInfo.value.douban_id
+    let res = await fetch(api)
+    let res_json = await res.json()
+    emojos.value = res_json
+  } catch {
+    emojos.value = []
+  }
+
 }
 
 async function addArtConfig(_art, key, v) {
