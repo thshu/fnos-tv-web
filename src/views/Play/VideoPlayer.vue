@@ -166,10 +166,11 @@ const ArtplayerStyle = {
 }
 
 const loadDanmuku = () => () => new Promise(resolve => {
-  let danmuku = `/danmu/get?douban_id=${playInfo.value.douban_id}&episode_number=${playInfo.value.episode_number===undefined?1:playInfo.value.episode_number}`;
+  let episode_number = playInfo.value.episode_number === undefined ? 1 : playInfo.value.episode_number;
+  let danmuku = `/danmu/get?douban_id=${playInfo.value.douban_id}&episode_number=${episode_number}`;
   fetch(danmuku)
       .then(res => res.json())
-      .then(json => resolve(json[playInfo.value.episode_number]))
+      .then(json => resolve(json[episode_number]))
 })
 
 // 切换清晰度
@@ -260,7 +261,7 @@ async function GetPalyUrl() {
     "audio_encoder": "aac",
     "audio_guid": StreamList.value.audio_streams[0].guid,
     "subtitle_guid": "",
-    "channels": (StreamList.value.audio_streams.length === 1?StreamList.value.audio_streams[0]:StreamList.value.audio_streams.find(o => o.codec_name === "aac")).channels
+    "channels": (StreamList.value.audio_streams.length === 1 ? StreamList.value.audio_streams[0] : StreamList.value.audio_streams.find(o => o.codec_name === "aac")).channels
   };
   let res = await COMMON.requests("POST", api, _data)
   if (res.data.code === 0) {
