@@ -177,7 +177,7 @@ async function switchQuality(item, $dom, event) {
 }
 
 async function GetEpisodeList() {
-  let api =  "/api/v1/episode/list/" + episode_guid.value;
+  let api = "/api/v1/episode/list/" + episode_guid.value;
   let res = await COMMON.requests("GET", api)
   if (res.data.code === 0) {
     EpisodeList.value = res.data.data;
@@ -266,6 +266,23 @@ async function GetPalyUrl() {
     urlBase.value = res.data.data.play_link;
     url.value = res.data.data.play_link;
   }
+}
+
+async function SendPlayRecord() {
+  let api = "/api/v1/play/record"
+  let data = {
+    "item_guid": episode_guid.value,
+    "media_guid": StreamList.value.video_streams[0].media_guid,
+    "video_guid": StreamList.value.video_streams[0].guid,
+    "audio_guid": StreamList.value.audio_streams[0].guid,
+    "subtitle_guid": "",
+    "resolution": QualityData.value[0].resolution,
+    "bitrate": QualityData.value[0].bitrate,
+    "ts": art.currentTime,
+    "duration": art.duration,
+    "play_link": urlBase.value
+  }
+  let res = await COMMON.requests("POST", api, data)
 }
 
 async function addArtConfig(_art, key, v) {
@@ -431,6 +448,7 @@ const onMountedFun = async () => {
   await GetQuality();
   await GetPalyUrl()
   loading.value = false;
+  timerList.value.push(setInterval(SendPlayRecord, 10000))
 };
 
 onBeforeRouteUpdate(async (to, from) => {
