@@ -1,0 +1,36 @@
+name: Build Vue Project on Release
+
+# 当发布版本时触发
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 克隆代码仓库
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # 设置 Node.js 环境（这里使用 Node.js v14，你可以根据需要更换版本）
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '19.9.0'
+
+      # 安装项目依赖
+      - name: Install dependencies
+        run: npm install
+
+      # 进行项目构建（Vue 项目一般通过 npm run build 进行构建，如果构建脚本不一样，请自行调整）
+      - name: Build project
+        run: npm run build
+
+      # 可选：你可以将构建产物上传为 GitHub 工作流的制品，或者部署到你选择的环境
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: build
+          path: dist/  # 根据你的项目构建目录进行调整
