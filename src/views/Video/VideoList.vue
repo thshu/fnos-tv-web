@@ -150,7 +150,7 @@ onMounted(async () => {
             </div>
           </div>
           <img v-if="item.poster !== undefined" loading="lazy" class="carousel-img"
-               :src='"http://fnos.xn--1jqw64a7tu.cn:81/v/api/v1/sys/img/92/17/"+item.poster + "?w=200"'>
+               :src=' COMMON.imgUrl + "/92/17/" + item.poster + "?w=200"'>
           <img v-else loading="lazy" class='carousel-img' src='/images/not_video.jpg'>
           <div class="view-item-title">
             {{ item.title }}

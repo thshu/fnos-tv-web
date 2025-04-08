@@ -1,9 +1,12 @@
 <script setup>
 import { useMediaDbData } from '../store'
-import {ref} from "vue";
+import {getCurrentInstance, ref} from "vue";
 const MediaDbData = useMediaDbData()
 const per_view = ref(5);
 const per_card = ref(8);
+const instance = getCurrentInstance();
+const proxy = instance.appContext.config.globalProperties;
+const COMMON = proxy.$COMMON;
 </script>
 
 <template>
@@ -41,7 +44,7 @@ const per_card = ref(8);
                                 }
                             }">
                 <img v-if="item.poster !== undefined" loading="lazy" class="carousel-img"
-                     :src='"http://fnos.xn--1jqw64a7tu.cn:81/v/api/v1/sys/img/92/17/"+item.poster + "?w=200"'>
+                     :src='COMMON.imgUrl +  "/92/17/"+item.poster + "?w=200"'>
                 <img v-else loading="lazy" class='carousel-img' src='/images/not_video.jpg'>
               </router-link>
               <div v-if="item.title != null" class="view-item-title">
