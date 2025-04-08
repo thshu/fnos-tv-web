@@ -319,7 +319,7 @@ async function addArtConfig(_art, key, v) {
 }
 
 async function UpdateControl(_art) {
-  console.log(1)
+  let forData = []
 
   let 倍速 = {
     name: '倍速',
@@ -355,43 +355,49 @@ async function UpdateControl(_art) {
       return `${item.html}`;
     },
   }
-  let 下一集 = {
-    name: '下一集',
-    position: 'left',
-    index: 11,
-    html: '<img width="22" heigth="22" src="./images/next.svg">',
-    tooltip: '下一集',
-    style: {
-      color: 'green',
-    },
-    click: function () {
-      play_next()
+  forData.push(倍速)
+
+  if (EpisodeList.value !== null && EpisodeList.value.length > 0) {
+    let 下一集 = {
+      name: '下一集',
+      position: 'left',
+      index: 11,
+      html: '<img width="22" heigth="22" src="./images/next.svg">',
+      tooltip: '下一集',
+      style: {
+        color: 'green',
+      },
+      click: function () {
+        play_next()
+      }
     }
-  }
+    forData.push(下一集)
 
-  let 选集_selector = []
-  for (let item of EpisodeList.value) {
-    选集_selector.push(
-        {
-          default: playInfo.value.episode_number === item.episode_number,
-          html: `第${item.episode_number}集：${item.title}`,
-          episode_guid: item.guid
-        }
-    )
-  }
-
-  let 选集 = {
-    name: '选集',
-    position: 'right',
-    html: "选集",
-    selector: 选集_selector,
-    onSelect: async function (item, $dom, event) {
-      episode_guid.value = item.episode_guid;
-      await play();
+    let 选集_selector = []
+    for (let item of EpisodeList.value) {
+      选集_selector.push(
+          {
+            default: playInfo.value.episode_number === item.episode_number,
+            html: `第${item.episode_number}集：${item.title}`,
+            episode_guid: item.guid
+          }
+      )
     }
+
+    let 选集 = {
+      name: '选集',
+      position: 'right',
+      html: "选集",
+      selector: 选集_selector,
+      onSelect: async function (item, $dom, event) {
+        episode_guid.value = item.episode_guid;
+        await play();
+      }
+    }
+    forData.push(选集)
   }
 
-  for (let item of [倍速, 下一集, 选集]) {
+  for (let item of forData) {
     await addArtConfig(_art, 'controls', item)
   }
 }
@@ -405,7 +411,7 @@ async function play() {
   if (art !== null) {
     await art.switchUrl(url.value);
   }
-  if(playLink !== null){
+  if (playLink !== null) {
     await mediaP("media.quit", playLink)
   }
 }
@@ -440,7 +446,7 @@ const artF = async (data) => {
   });
   art.on("video:timeupdate", () => {
     var params = new URLSearchParams(window.location.search);
-    if (params.get("gallery_type") === "tv") {
+    if (params.get("gallery_type") === "TV") {
       var duration = art.duration;
       var tail_time = EpisodeList.value.tail_time;
       if (tail_time > duration / 3) {
@@ -515,7 +521,9 @@ async function getInstance(_art) {
 const onMountedFun = async () => {
   loading.value = true;
   await GetEmoji();
-  await GetEpisodeList();
+  if (gallery_type === "TV") {
+    await GetEpisodeList();
+  }
   await play()
   loading.value = false;
 };
