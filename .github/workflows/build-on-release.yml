@@ -11,8 +11,10 @@ jobs:
 
     steps:
       # 克隆代码仓库
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       # 设置 Node.js 环境（这里使用 Node.js v14，你可以根据需要更换版本）
       - name: Setup Node.js
