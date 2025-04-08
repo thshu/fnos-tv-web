@@ -24,6 +24,7 @@ const loading = ref(true);
 const urlBase = ref(null);
 const url = ref(null);
 const timerList = ref([]);
+const emojos = ref(null);
 
 const qualitySelector = ref([]);
 
@@ -278,11 +279,18 @@ async function SendPlayRecord() {
     "subtitle_guid": "",
     "resolution": QualityData.value[0].resolution,
     "bitrate": QualityData.value[0].bitrate,
-    "ts": art.currentTime,
+    "ts": Math.floor(art.currentTime),
     "duration": art.duration,
     "play_link": urlBase.value
   }
   let res = await COMMON.requests("POST", api, data)
+}
+
+async function GetEmoji(){
+  let api = "/danmu/getEmoji?douban_id=" + playInfo.value.douban_id
+  let res = await fetch(api)
+  let res_json = await res.json()
+  emojos.value = res_json
 }
 
 async function addArtConfig(_art, key, v) {
@@ -443,6 +451,7 @@ async function getInstance(_art) {
 const onMountedFun = async () => {
   loading.value = true;
   await GetPayInfo();
+  await GetEmoji();
   await GetEpisodeList();
   await GetStreamList();
   await GetQuality();
