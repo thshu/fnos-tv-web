@@ -17,10 +17,10 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': {
-        target: 'http://fnos.xn--1jqw64a7tu.cn:81/v/api',  // 后端的地址
+      '/fnos': {
+        target: 'https://fnos.xn--1jqw64a7tu.cn:444',  // 后端的地址
         changeOrigin: true,  // 设置为 true，代理请求会将 Origin 头部改为目标地址
-        rewrite: (path) => path.replace(/^\/api/, ''),  // 可选：重写路径，去掉 /api 前缀
+        rewrite: (path) => path.replace(/^\/fnos/, ''),  // 可选：重写路径，去掉 /api 前缀
       }
     }
   }

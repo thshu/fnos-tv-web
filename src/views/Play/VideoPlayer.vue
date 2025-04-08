@@ -165,10 +165,10 @@ const ArtplayerStyle = {
 }
 
 const loadDanmuku = () => () => new Promise(resolve => {
-  let danmuku = "/danmu/get?douban_id=" + playInfo.value.douban_id;
+  let danmuku = `/danmu/get?douban_id=${playInfo.value.douban_id}&episode_number=${playInfo.value.episode_number}`;
   fetch(danmuku)
       .then(res => res.json())
-      .then(json => resolve(json))
+      .then(json => resolve(json[playInfo.value.episode_number]))
 })
 
 // 切换清晰度
