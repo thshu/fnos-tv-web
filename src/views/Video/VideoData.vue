@@ -88,7 +88,7 @@ async function Play(_guid = play_guid.value) {
     path: "/player",
     query: {
       gallery_type: gallery_type.value,
-      guid: guid.value,
+      guid: playInfo.value.parent_guid,
       episode_guid: _guid
     }
   })

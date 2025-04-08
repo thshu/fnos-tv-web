@@ -1,7 +1,7 @@
 <script setup>
 import flvjs from 'flv.js';
 import Hls from 'hls.js';
-import {getCurrentInstance, onMounted, ref} from "vue";
+import {getCurrentInstance, onMounted,onBeforeUnmount, ref} from "vue";
 
 import Artplayer from "./ArtPlayer.vue";
 import {onBeforeRouteLeave, onBeforeRouteUpdate} from "vue-router";
@@ -23,7 +23,7 @@ const showModal = ref(false);
 const loading = ref(true);
 const urlBase = ref(null);
 const url = ref(null);
-const timerList = ref([]);
+const timerSendPlayRecord = ref(null);
 const emojos = ref(null);
 
 const qualitySelector = ref([]);
@@ -178,7 +178,7 @@ async function switchQuality(item, $dom, event) {
 }
 
 async function GetEpisodeList() {
-  let api = "/api/v1/episode/list/" + episode_guid.value;
+  let api = "/api/v1/episode/list/" + guid.value;
   let res = await COMMON.requests("GET", api)
   if (res.data.code === 0) {
     EpisodeList.value = res.data.data;
@@ -260,12 +260,12 @@ async function GetPalyUrl() {
     "audio_encoder": "aac",
     "audio_guid": StreamList.value.audio_streams[0].guid,
     "subtitle_guid": "",
-    "channels": StreamList.value.audio_streams.find(o=>o.codec_name === "aac").channels
+    "channels": StreamList.value.audio_streams.find(o => o.codec_name === "aac").channels
   };
   let res = await COMMON.requests("POST", api, _data)
   if (res.data.code === 0) {
     urlBase.value = res.data.data.play_link;
-    url.value = COMMON.fnHost +  res.data.data.play_link;
+    url.value = COMMON.fnHost + res.data.data.play_link;
   }
 }
 
@@ -286,6 +286,16 @@ async function SendPlayRecord() {
     }
     let res = await COMMON.requests("POST", api, data)
   }
+}
+
+async function mediaP(req, playLink) {
+  let api = "/api/v1/media/p"
+  let data = {
+    "req": req,
+    "reqid": "1234567890ABCDEF",
+    "playLink": playLink
+  }
+  let res = await COMMON.requests("POST", api, data)
 }
 
 async function GetEmoji() {
@@ -363,8 +373,24 @@ async function UpdateControl(_art) {
   }
 }
 
+async function play_next() {
+  let episode_data = EpisodeList.value.find(o => o.episode_number === (playInfo.value.episode_number + 1))
+  episode_guid.value = episode_data.guid
+  await GetPayInfo();
+  await GetStreamList();
+  await GetQuality();
+  let playLink = urlBase.value;
+  await GetPalyUrl();
+  await art.switchUrl(url.value);
+  await mediaP("media.quit", playLink)
+}
+
 
 async function ready() {
+  if (timerSendPlayRecord.value !== null) {
+    clearInterval(timerSendPlayRecord.value)
+  }
+  timerSendPlayRecord.value = setInterval(SendPlayRecord, 10000)
   art.seek = playInfo.value.watched_ts
   await UpdateControl(art);
   art.plugins.artplayerPluginDanmuku.reset();
@@ -395,14 +421,14 @@ const artF = async (data) => {
 
       if ((art.currentTime + tail_time) > duration && (is_skip === undefined || is_skip)) {
         art.currentTime = 1
-        next_set()
+        play_next()
       }
     }
 
 
   })
   art.on('video:ended', () => {
-    next_set()
+    play_next()
   });
 
   art.on('artplayerPluginDanmuku:config', (option) => {
@@ -464,7 +490,6 @@ const onMountedFun = async () => {
   await GetQuality();
   await GetPalyUrl()
   loading.value = false;
-  timerList.value.push(setInterval(SendPlayRecord, 10000))
 };
 
 onBeforeRouteUpdate(async (to, from) => {
@@ -475,15 +500,20 @@ onBeforeRouteUpdate(async (to, from) => {
 });
 
 onBeforeRouteLeave((to, from) => {
-  for (var t of timerList.value) {
-    clearInterval(t);
+  if (timerSendPlayRecord.value) {
+    clearInterval(timerSendPlayRecord.value)
+    timerSendPlayRecord.value = null
   }
 });
 
+onBeforeUnmount(async () => {
+  if (timerSendPlayRecord.value) {
+    clearInterval(timerSendPlayRecord.value)
+    timerSendPlayRecord.value = null
+  }
+})
 onMounted(async () => {
   await onMountedFun();
-
-
 })
 
 </script>
