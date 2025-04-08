@@ -226,8 +226,8 @@ onMounted(async () => {
 
                   <n-dropdown trigger="hover" placement="bottom-start" :options="options"
                               @select="handleSelect">
-                    <n-avatar circle size="medium">
-                      {{ UserInfo !== undefined ? UserInfo.username : ''}}
+                    <n-avatar circle size="medium" :style="{backgroundColor:'#468DF1'}">
+                      {{ UserInfo !== undefined ? UserInfo.username : '' }}
 
                     </n-avatar>
                   </n-dropdown>
@@ -249,15 +249,15 @@ onMounted(async () => {
                           <span class="title">主页</span>
                         </router-link>
                       </li>
-<!--                      <li>-->
-<!--                        <router-link to="/star">-->
-<!--                                                    <span class="icon">-->
-<!--                                                        <i class='bx bx-star'></i>-->
+                      <!--                      <li>-->
+                      <!--                        <router-link to="/star">-->
+                      <!--                                                    <span class="icon">-->
+                      <!--                                                        <i class='bx bx-star'></i>-->
 
-<!--                                                    </span>-->
-<!--                          <span class="title">收藏</span>-->
-<!--                        </router-link>-->
-<!--                      </li>-->
+                      <!--                                                    </span>-->
+                      <!--                          <span class="title">收藏</span>-->
+                      <!--                        </router-link>-->
+                      <!--                      </li>-->
                     </ul>
                   </div>
                 </div>
