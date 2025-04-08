@@ -15,7 +15,7 @@ const user = ref({
 })
 
 async function LoginUser() {
-  let api = "/api/v1/login"
+  let api = COMMON.fnHost + "/api/v1/login"
   let res = await COMMON.requests("POST", api, user.value)
   if (res.data.code === 0) {
     VueCookies.set('authorization', res.data.data.token, 60 * 60 * 24 * 7)

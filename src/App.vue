@@ -47,7 +47,7 @@ if (collapsedItem === "true") {
 // 获取用户信息
 async function GetUserInfo() {
   if (VueCookies.get('authorization') !== null) {
-    let api = '/api/v1/user/info'
+    let api = COMMON.fnHost + '/api/v1/user/info'
     let res = await COMMON.requests("GET", api);
     if (res.data.code === 0) {
       isLogin.value = true;
@@ -60,7 +60,7 @@ async function GetUserInfo() {
 }
 
 async function getConfig() {
-  let api = '/api/v1/sys/config'
+  let api = COMMON.fnHost + '/api/v1/sys/config'
   let res = await COMMON.requests("GET", api);
   if (res.data.code === 0) {
     ConfigData.value = res.data.data;
@@ -70,7 +70,7 @@ async function getConfig() {
 }
 
 async function GetMediaDbList() {
-  let api = '/api/v1/mediadb/list'
+  let api = COMMON.fnHost + '/api/v1/mediadb/list'
   let res = await COMMON.requests("GET", api);
   if (res.data.code === 0) {
     data.value = res.data.data;
@@ -81,7 +81,7 @@ async function GetMediaDbList() {
 }
 
 async function GetMediaDbSum() {
-  let api = '/api/v1/mediadb/sum'
+  let api = COMMON.fnHost + '/api/v1/mediadb/sum'
   let res = await COMMON.requests("GET", api);
   if (res.data.code === 0) {
     MediaDbSum.value = res.data.data;
@@ -91,7 +91,7 @@ async function GetMediaDbSum() {
 }
 
 async function GetMediaDbInfos() {
-  let api = '/api/v1/item/list'
+  let api = COMMON.fnHost + '/api/v1/item/list'
 
   for (let _d of data.value) {
     let guid = _d.guid;
