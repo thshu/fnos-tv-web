@@ -260,7 +260,7 @@ async function GetPalyUrl() {
     "audio_encoder": "aac",
     "audio_guid": StreamList.value.audio_streams[0].guid,
     "subtitle_guid": "",
-    "channels": StreamList.value.audio_streams.find(o => o.codec_name === "aac").channels
+    "channels": (StreamList.value.audio_streams.length === 1?StreamList.value.audio_streams[0]:StreamList.value.audio_streams.find(o => o.codec_name === "aac")).channels
   };
   let res = await COMMON.requests("POST", api, _data)
   if (res.data.code === 0) {
