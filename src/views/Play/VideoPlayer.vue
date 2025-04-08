@@ -177,7 +177,7 @@ async function switchQuality(item, $dom, event) {
 }
 
 async function GetEpisodeList() {
-  let api = COMMON.fnHost + "/api/v1/episode/list/" + episode_guid.value;
+  let api =  "/api/v1/episode/list/" + episode_guid.value;
   let res = await COMMON.requests("GET", api)
   if (res.data.code === 0) {
     EpisodeList.value = res.data.data;
@@ -186,7 +186,7 @@ async function GetEpisodeList() {
 
 // 获取播放信息
 async function GetPayInfo() {
-  let api = COMMON.fnHost + "/api/v1/play/info";
+  let api = "/api/v1/play/info";
   let _data = {
     "item_guid": episode_guid.value
   }
@@ -197,7 +197,7 @@ async function GetPayInfo() {
 }
 
 async function GetStreamList() {
-  let api = COMMON.fnHost + "/api/v1/stream/list/" + episode_guid.value;
+  let api = "/api/v1/stream/list/" + episode_guid.value;
   let res = await COMMON.requests("GET", api)
   if (res.data.code === 0) {
     StreamList.value = res.data.data;
@@ -206,7 +206,7 @@ async function GetStreamList() {
 
 // 获取清晰度
 async function GetQuality() {
-  let api = COMMON.fnHost + "/api/v1/play/quality"
+  let api = "/api/v1/play/quality"
   let _data = {
     "media_guid": StreamList.value.video_streams[0].media_guid
   }
@@ -248,7 +248,7 @@ async function GetQuality() {
 }
 
 async function GetPalyUrl() {
-  let api = COMMON.fnHost + "/api/v1/play/play"
+  let api = "/api/v1/play/play"
   let _data = {
     "media_guid": StreamList.value.video_streams[0].media_guid,
     "video_guid": StreamList.value.video_streams[0].guid,
@@ -264,7 +264,7 @@ async function GetPalyUrl() {
   let res = await COMMON.requests("POST", api, _data)
   if (res.data.code === 0) {
     urlBase.value = res.data.data.play_link;
-    url.value = COMMON.fnHost + res.data.data.play_link;
+    url.value = res.data.data.play_link;
   }
 }
 

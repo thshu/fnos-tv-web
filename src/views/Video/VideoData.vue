@@ -26,7 +26,7 @@ gallery_type.value = proxy.$route.query.gallery_type
 
 // 获取剧集信息
 async function GetVideoData() {
-  let api = COMMON.fnHost + "/api/v1/item/" + guid.value;
+  let api = "/api/v1/item/" + guid.value;
   let res = await COMMON.requests("GET", api)
   if (res.data.code === 0) {
     VideoDataInfo.value = res.data.data;
@@ -41,7 +41,7 @@ async function GetVideoData() {
 
 // 获取季信息
 async function GetSeasonData() {
-  let api = COMMON.fnHost + "/api/v1/season/list/" + guid.value;
+  let api = "/api/v1/season/list/" + guid.value;
   let res = await COMMON.requests("GET", api)
   if (res.data.code === 0) {
     SeasonData.value = res.data.data
@@ -50,7 +50,7 @@ async function GetSeasonData() {
 
 // 获取播放信息
 async function GetPayInfo() {
-  let api = COMMON.fnHost + "/api/v1/play/info";
+  let api = "/api/v1/play/info";
   let _data = {
     "item_guid": guid.value
   }
@@ -62,7 +62,7 @@ async function GetPayInfo() {
 }
 
 async function GetPersonList() {
-  let api = COMMON.fnHost + "/api/v1/person/list/" + guid.value;
+  let api = "/api/v1/person/list/" + guid.value;
   let res = await COMMON.requests("POST", api)
   if (res.data.code === 0) {
     PersonList.value = res.data.data.list.filter(o => o.role !== "");
@@ -70,7 +70,7 @@ async function GetPersonList() {
 }
 
 async function GetEpisodeList() {
-  let api = COMMON.fnHost + "/api/v1/episode/list/" + guid.value;
+  let api = "/api/v1/episode/list/" + guid.value;
   let res = await COMMON.requests("GET", api)
   if (res.data.code === 0) {
     EpisodeList.value = res.data.data;
