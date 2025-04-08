@@ -256,11 +256,11 @@ async function GetPalyUrl() {
     "video_encoder": StreamList.value.video_streams[0].codec_name,
     "resolution": QualityData.value[0].resolution,
     "bitrate": StreamList.value.video_streams[0].bps,
-    "startTimestamp": 0,
-    "audio_encoder": StreamList.value.audio_streams[0].codec_name,
+    "startTimestamp": playInfo.value.watched_ts,
+    "audio_encoder": "aac",
     "audio_guid": StreamList.value.audio_streams[0].guid,
     "subtitle_guid": "",
-    "channels": StreamList.value.audio_streams[0].channels
+    "channels": StreamList.value.audio_streams.find(o=>o.codec_name === "aac").channels
   };
   let res = await COMMON.requests("POST", api, _data)
   if (res.data.code === 0) {
