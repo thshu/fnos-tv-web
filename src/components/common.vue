@@ -6,7 +6,7 @@ import Snackbar from 'node-snackbar';
 
 // 定义一些公共的属性和方法
 let title = 'FNOS';
-let fnHost = "http://fnos.xn--1jqw64a7tu.cn:81";
+let fnHost = "/fnos";
 let apiUrl = `${fnHost}/v/api`;
 let imgUrl = `${apiUrl}/v1/sys/img`
 const isMo = /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent);

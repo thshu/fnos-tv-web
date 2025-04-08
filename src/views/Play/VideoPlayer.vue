@@ -165,7 +165,7 @@ const ArtplayerStyle = {
 }
 
 const loadDanmuku = () => () => new Promise(resolve => {
-  let danmuku = "/danmu/get?douban_id=" + playInfo.value.douban_id;
+  let danmuku = `/danmu/get?douban_id=${playInfo.value.douban_id}&episode_number=${playInfo.value.episode_number}`;
   fetch(danmuku)
       .then(res => res.json())
       .then(json => resolve(json))
@@ -177,7 +177,7 @@ async function switchQuality(item, $dom, event) {
 }
 
 async function GetEpisodeList() {
-  let api = "/api/v1/episode/list/" + episode_guid.value;
+  let api = COMMON.fnHost + "/api/v1/episode/list/" + episode_guid.value;
   let res = await COMMON.requests("GET", api)
   if (res.data.code === 0) {
     EpisodeList.value = res.data.data;
@@ -186,7 +186,7 @@ async function GetEpisodeList() {
 
 // 获取播放信息
 async function GetPayInfo() {
-  let api = "/api/v1/play/info";
+  let api = COMMON.fnHost + "/api/v1/play/info";
   let _data = {
     "item_guid": episode_guid.value
   }
@@ -197,7 +197,7 @@ async function GetPayInfo() {
 }
 
 async function GetStreamList() {
-  let api = "/api/v1/stream/list/" + episode_guid.value;
+  let api = COMMON.fnHost + "/api/v1/stream/list/" + episode_guid.value;
   let res = await COMMON.requests("GET", api)
   if (res.data.code === 0) {
     StreamList.value = res.data.data;
@@ -206,7 +206,7 @@ async function GetStreamList() {
 
 // 获取清晰度
 async function GetQuality() {
-  let api = "/api/v1/play/quality"
+  let api = COMMON.fnHost + "/api/v1/play/quality"
   let _data = {
     "media_guid": StreamList.value.video_streams[0].media_guid
   }
@@ -248,7 +248,7 @@ async function GetQuality() {
 }
 
 async function GetPalyUrl() {
-  let api = "/api/v1/play/play"
+  let api = COMMON.fnHost + "/api/v1/play/play"
   let _data = {
     "media_guid": StreamList.value.video_streams[0].media_guid,
     "video_guid": StreamList.value.video_streams[0].guid,

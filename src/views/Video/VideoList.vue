@@ -53,7 +53,7 @@ const orders = [
 
 
 async function GetMediaDbInfos() {
-  let api = '/api/v1/item/list'
+  let api = COMMON.fnHost + '/api/v1/item/list'
 
   let _data = {
     "ancestor_guid": guid.value,
