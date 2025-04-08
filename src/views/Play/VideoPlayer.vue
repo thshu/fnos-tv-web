@@ -264,7 +264,7 @@ async function GetPalyUrl() {
   let res = await COMMON.requests("POST", api, _data)
   if (res.data.code === 0) {
     urlBase.value = res.data.data.play_link;
-    url.value = res.data.data.play_link;
+    url.value = COMMON.fnHost +  res.data.data.play_link;
   }
 }
 
