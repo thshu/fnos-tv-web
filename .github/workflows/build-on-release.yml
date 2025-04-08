@@ -30,9 +30,9 @@ jobs:
       - name: Build project
         run: npm run build
 
-      # 可选：你可以将构建产物上传为 GitHub 工作流的制品，或者部署到你选择的环境
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build
-          path: dist/  # 根据你的项目构建目录进行调整
+          path: dist/
+
