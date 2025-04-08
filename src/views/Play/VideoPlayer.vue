@@ -1,7 +1,7 @@
 <script setup>
 import flvjs from 'flv.js';
 import Hls from 'hls.js';
-import {getCurrentInstance, onMounted,onBeforeUnmount, ref} from "vue";
+import {getCurrentInstance, onMounted, onBeforeUnmount, ref} from "vue";
 
 import Artplayer from "./ArtPlayer.vue";
 import {onBeforeRouteLeave, onBeforeRouteUpdate} from "vue-router";
@@ -368,21 +368,52 @@ async function UpdateControl(_art) {
       play_next()
     }
   }
-  for (let item of [倍速, 下一集]) {
+
+  let 选集_selector = []
+  for (let item of EpisodeList.value) {
+    选集_selector.push(
+        {
+          default: playInfo.value.episode_number === item.episode_number,
+          html: `第${item.episode_number}集：${item.title}`,
+          episode_guid: item.guid
+        }
+    )
+  }
+
+  let 选集 = {
+    name: '选集',
+    position: 'right',
+    html: "选集",
+    selector: 选集_selector,
+    onSelect: async function (item, $dom, event) {
+      episode_guid.value = item.episode_guid;
+      await play();
+    }
+  }
+
+  for (let item of [倍速, 下一集, 选集]) {
     await addArtConfig(_art, 'controls', item)
+  }
+}
+
+async function play() {
+  let playLink = urlBase.value;
+  await GetPayInfo();
+  await GetStreamList();
+  await GetQuality();
+  await GetPalyUrl();
+  if (art !== null) {
+    await art.switchUrl(url.value);
+  }
+  if(playLink !== null){
+    await mediaP("media.quit", playLink)
   }
 }
 
 async function play_next() {
   let episode_data = EpisodeList.value.find(o => o.episode_number === (playInfo.value.episode_number + 1))
   episode_guid.value = episode_data.guid
-  await GetPayInfo();
-  await GetStreamList();
-  await GetQuality();
-  let playLink = urlBase.value;
-  await GetPalyUrl();
-  await art.switchUrl(url.value);
-  await mediaP("media.quit", playLink)
+  await play()
 }
 
 
@@ -483,12 +514,9 @@ async function getInstance(_art) {
 
 const onMountedFun = async () => {
   loading.value = true;
-  await GetPayInfo();
   await GetEmoji();
   await GetEpisodeList();
-  await GetStreamList();
-  await GetQuality();
-  await GetPalyUrl()
+  await play()
   loading.value = false;
 };
 
