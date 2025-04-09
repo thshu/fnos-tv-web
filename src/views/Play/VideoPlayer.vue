@@ -522,7 +522,7 @@ async function getInstance(_art) {
 const onMountedFun = async () => {
   loading.value = true;
   await GetEmoji();
-  if (gallery_type === "TV") {
+  if (gallery_type.value === "TV") {
     await GetEpisodeList();
   }
   await play()
