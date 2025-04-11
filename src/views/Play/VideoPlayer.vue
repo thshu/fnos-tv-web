@@ -393,6 +393,7 @@ async function UpdateControl(_art) {
       onSelect: async function (item, $dom, event) {
         episode_guid.value = item.episode_guid;
         await play();
+        return "选集";
       }
     }
     forData.push(选集)

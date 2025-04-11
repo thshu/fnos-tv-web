@@ -1,17 +1,90 @@
 <script setup>
-import { useMediaDbData } from '../store'
-import {getCurrentInstance, ref} from "vue";
+import {useMediaDbData} from '../store'
+import {getCurrentInstance, onMounted, ref} from "vue";
+
 const MediaDbData = useMediaDbData()
 const per_view = ref(5);
 const per_card = ref(8);
 const instance = getCurrentInstance();
 const proxy = instance.appContext.config.globalProperties;
 const COMMON = proxy.$COMMON;
+const playList = ref(null)
+const play_item_guid = ref(null);
+const EpisodeCarouselRef = ref(null);
+
+async function GetPlayList() {
+  let api = "/api/v1/play/list"
+  let res = await COMMON.requests("GET", api);
+  if (res.data.code === 0) {
+    playList.value = res.data.data;
+  }
+}
+
+// 下一张
+const goNext = () => {
+  let _index = EpisodeCarouselRef.value.getCurrentIndex();
+  EpisodeCarouselRef.value?.to(_index + per_view.value);
+};
+
+// 上一张
+const goPrev = () => {
+  let _index = EpisodeCarouselRef.value.getCurrentIndex();
+  EpisodeCarouselRef.value?.to(_index - per_view.value);
+};
+
+onMounted(async () => {
+  await GetPlayList();
+})
 </script>
 
 <template>
-  <div  class="content">
+  <div class="content">
     <div class="card-list">
+      <div class="card-shows">
+        <div class="card-show-title">
+          继续观看
+        </div>
+        <div class="carousel-container">
+          <n-carousel :show-dots="false" :slides-per-view="per_view" :space-between="20" ref="EpisodeCarouselRef"
+                      :loop="false" draggable>
+            <div class="view-item" v-for="(item, index) in playList" :key="item.guid"
+                 @mouseenter="play_item_guid = item.guid"
+                 @mouseleave="play_item_guid = null">
+              <div>
+                <router-link :to="{
+                    path: '/player', query: {
+                        gallery_type: item.type === 'Movie'?'Movie':'TV',
+                        guid: item.parent_guid,
+                        episode_guid: item.guid
+                    }
+                }">
+                  <img v-if="item.poster.length > 0" loading="lazy" class='gallery-img'
+                       :src='COMMON.imgUrl + item.poster' style="border-radius:10px">
+                  <img v-else loading="lazy" class='gallery-img' src='/images/not_gellery.png'>
+                  <!-- 播放图标 (仅在 hover 时显示) -->
+                  <div v-if="play_item_guid === item.guid" class="play-icon">
+                    <i class="bx bx-play"></i>
+                  </div>
+                  <div class="view-item-title">
+                    {{ item.type === 'Episode' ? item.tv_title : item.title }}
+                  </div>
+                  <div v-if="item.type === 'Episode'" class="view-item-title" style="font-size: 0.8em;color:rgba(0, 0, 0, 0.4);">
+                    第 {{ item.season_number }} 季·第 {{ item.episode_number }} 集
+                  </div>
+                  <div v-else class="view-item-title" style="font-size: 0.8em;color:rgba(0, 0, 0, 0.4);">
+                    电影
+                  </div>
+                </router-link>
+              </div>
+            </div>
+          </n-carousel>
+          <!-- 左箭头 -->
+          <button class="carousel-arrow left" @click="goPrev">‹</button>
+
+          <!-- 右箭头 -->
+          <button class="carousel-arrow right" @click="goNext">›</button>
+        </div>
+      </div>
       <div class="card-shows" v-for="(key, index) in Object.keys(MediaDbData.info)" :key="index">
         <div class="card-show-title">
           {{ MediaDbData.list.find((item) => item.guid === key).title }}
@@ -247,5 +320,72 @@ img.carousel-img {
   .custom-arrow.next {
     bottom: 60px;
   }
+}
+
+
+/* 轮播容器，确保箭头在正确位置 */
+.carousel-container {
+  position: relative;
+  width: 100%;
+}
+
+
+/* 左右箭头按钮 */
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  font-size: 24px;
+  padding: 10px 15px;
+  cursor: pointer;
+  z-index: 10;
+  border-radius: 50%;
+  transition: background 0.3s ease;
+}
+
+.carousel-arrow:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* 左箭头位置 */
+.carousel-arrow.left {
+  left: 5px;
+}
+
+/* 右箭头位置 */
+.carousel-arrow.right {
+  right: 5px;
+}
+
+/* 鼠标悬浮时放大 */
+.view-item:hover .gallery-img {
+  transform: scale(1.05);
+}
+
+/* 播放按钮 */
+.play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 40px;
+  color: white;
+  background: rgba(0, 0, 0, 0.6);
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.3s ease;
+  cursor: pointer;
+}
+
+/* 悬浮时背景变亮 */
+.play-icon:hover {
+  background: rgba(0, 0, 0, 0.8);
 }
 </style>
