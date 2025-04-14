@@ -7,6 +7,7 @@ import naive from 'naive-ui'
 import global from './components/common.vue'
 import router from './router'
 import { createPinia } from 'pinia'
+import Snackbar from 'node-snackbar';
 
 import "node-snackbar/dist/snackbar.min.css"
 import 'boxicons/css/boxicons.min.css'
@@ -26,3 +27,7 @@ app.use(pinia)
 app.config.globalProperties.$COMMON = global;
 
 app.mount('#app')
+
+app.config.errorHandler = (err, instance, info) => {
+    Snackbar.show({pos: 'top-center', text: err, showAction: false});
+};

@@ -60,6 +60,22 @@ danmu_setting = JSON.parse(danmu_setting).value
 const setting = ref({
   url: "",
   id: "",
+  layers: [
+    {
+      name: "title",
+      html: '<div class="art-title"></div>',
+      style: {
+        position: 'absolute',
+        top: '10px',
+        left: '10px',
+        color: '#fff',
+        fontSize: '16px',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        padding: '4px 8px',
+        borderRadius: '4px',
+      }
+    },
+  ],
   customType: {
     m3u8: function (video, url) {
       var hls = new Hls()
@@ -191,7 +207,6 @@ async function GetPayInfo() {
   }
   let res = await COMMON.requests("POST", api, true, _data)
   playInfo.value = res.item;
-  console.log(playInfo.value)
 }
 
 async function GetStreamList() {
@@ -417,6 +432,7 @@ async function play_next() {
 
 async function ready() {
 
+  // 加载自己修改的弹幕js
   await import('../../../public/packages//artplayer-plugin-danmuku.js');
   art.plugins.add(window.artplayerPluginDanmuku(danmu_setting));
   // art.plugins.artplayerPluginDanmuku.config(danmu_setting)
@@ -428,6 +444,25 @@ async function ready() {
   await UpdateControl(art);
   art.plugins.artplayerPluginDanmuku.reset();
   art.plugins.artplayerPluginDanmuku.load(loadDanmuku());
+
+
+  art.layers.update(
+      {
+        name: "title",
+        html: `<div class="art-title">第${playInfo.value.episode_number}集：${playInfo.value.title}</div>`,
+        style: {
+          position: 'absolute',
+          top: '10px',
+          left: '10px',
+          color: '#fff',
+          fontSize: '16px',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          padding: '4px 8px',
+          borderRadius: '4px',
+        }
+      }
+  )
+
 }
 
 const artF = async (data) => {
@@ -457,11 +492,29 @@ const artF = async (data) => {
         play_next()
       }
     }
-
-
   })
   art.on('video:ended', () => {
     play_next()
+  });
+
+  art.on('control', (state) => {
+    art.layers.update(
+        {
+          disable: !state,
+          name: "title",
+          html: `<div class="art-title">第${playInfo.value.episode_number}集：${playInfo.value.title}</div>`,
+          style: {
+            position: 'absolute',
+            top: '10px',
+            left: '10px',
+            color: '#fff',
+            fontSize: '16px',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            padding: '4px 8px',
+            borderRadius: '4px',
+          }
+        }
+    )
   });
 
   art.on('artplayerPluginDanmuku:config', (option) => {
@@ -517,7 +570,7 @@ async function getInstance(_art) {
 const onMountedFun = async () => {
   loading.value = true;
   await GetEmoji();
-  if (gallery_type.value === "TV") {
+  if (gallery_type.value !== "Movie") {
     await GetEpisodeList();
   }
   await play()

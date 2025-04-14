@@ -27,9 +27,9 @@ gallery_type.value = proxy.$route.query.gallery_type
 // 获取剧集信息
 async function GetVideoData() {
   let api = "/api/v1/item/" + guid.value;
-  let res = await COMMON.requests("GET", true, api)
+  let res = await COMMON.requests("GET", api, true)
   VideoDataInfo.value = res;
-  if (res.data.data.backdrops !== undefined) {
+  if (res.backdrops !== undefined) {
     backImg.value = COMMON.imgUrl + "/92/17/" + res.backdrops + "?w=200"
   } else {
     backImg.value = COMMON.imgUrl + "/92/17/" + VideoDataInfo.value.posters + "?w=200"
@@ -40,7 +40,7 @@ async function GetVideoData() {
 // 获取季信息
 async function GetSeasonData() {
   let api = "/api/v1/season/list/" + guid.value;
-  SeasonData.value = await COMMON.requests("GET", true, api)
+  SeasonData.value = await COMMON.requests("GET", api, true)
 }
 
 // 获取播放信息
@@ -163,7 +163,7 @@ onMounted(async () => {
                                     <span class="button-icon">
                                         <i class='bx bxs-caret-right-circle'></i>
                                     </span>
-                  <span class="button-text" v-if="playInfo!=null && gallery_type === 'TV'">
+                  <span class="button-text" v-if="playInfo!=null && gallery_type !== 'Movie'">
                     第 {{ playInfo.item.season_number }} 季 第 {{ playInfo.item.episode_number }} 集
                                     </span>
                   <span class="button-text" v-else>
