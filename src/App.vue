@@ -1,12 +1,10 @@
 <script setup>
-import {ref, onMounted, getCurrentInstance, watch} from 'vue'
+import {getCurrentInstance, onMounted, ref, watch} from 'vue'
 import VueCookies from 'vue-cookies';
-import Login from './views/User/Login.vue'
 import {darkTheme} from "naive-ui";
 
 import {useMediaDbData} from './store.js'
-import {onBeforeRouteLeave, onBeforeRouteUpdate, useRoute} from "vue-router";
-import router from "@/router/index.js";
+import {useRoute} from "vue-router";
 
 const MediaDbData = useMediaDbData()
 
@@ -295,9 +293,6 @@ watch(
                 <router-view v-on:refApp="RefAppData()"/>
               </n-layout>
             </n-layout>
-            <n-layout-footer position="absolute" style="height: 64px; padding: 24px" bordered>
-              @2023
-            </n-layout-footer>
             <n-modal v-model:show="showSaerch" transform-origin="center">
               <n-card style="width: 600px" title="搜索" :bordered="false" size="huge" role="dialog"
                       aria-modal="true">
