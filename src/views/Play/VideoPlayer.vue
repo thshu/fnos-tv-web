@@ -5,7 +5,7 @@ import {getCurrentInstance, onMounted, onBeforeUnmount, ref} from "vue";
 
 import Artplayer from "./ArtPlayer.vue";
 import {onBeforeRouteLeave, onBeforeRouteUpdate} from "vue-router";
-import artplayerPluginDanmuku from "artplayer-plugin-danmuku";
+// import artplayerPluginDanmuku from "artplayer-plugin-danmuku";
 
 const instance = getCurrentInstance();
 const proxy = instance.appContext.config.globalProperties;
@@ -152,7 +152,7 @@ const setting = ref({
     indicator: '<img width="16" heigth="16" src="./images/indicator.svg">',
   },
   plugins: [
-    artplayerPluginDanmuku(danmu_setting)
+    // window.artplayerPluginDanmuku(danmu_setting)
   ],
 })
 
@@ -180,10 +180,7 @@ async function switchQuality(item, $dom, event) {
 
 async function GetEpisodeList() {
   let api = "/api/v1/episode/list/" + guid.value;
-  let res = await COMMON.requests("GET", api)
-  if (res.data.code === 0) {
-    EpisodeList.value = res.data.data;
-  }
+  EpisodeList.value = await COMMON.requests("GET", api, true)
 }
 
 // 获取播放信息
@@ -192,18 +189,14 @@ async function GetPayInfo() {
   let _data = {
     "item_guid": episode_guid.value
   }
-  let res = await COMMON.requests("POST", api, _data)
-  if (res.data.code === 0) {
-    playInfo.value = res.data.data.item;
-  }
+  let res = await COMMON.requests("POST", api, true, _data)
+  playInfo.value = res.item;
+  console.log(playInfo.value)
 }
 
 async function GetStreamList() {
   let api = "/api/v1/stream/list/" + episode_guid.value;
-  let res = await COMMON.requests("GET", api)
-  if (res.data.code === 0) {
-    StreamList.value = res.data.data;
-  }
+  StreamList.value = await COMMON.requests("GET", api, true)
 }
 
 // 获取清晰度
@@ -212,41 +205,40 @@ async function GetQuality() {
   let _data = {
     "media_guid": StreamList.value.video_streams[0].media_guid
   }
-  let res = await COMMON.requests("POST", api, _data);
-  if (res.data.code === 0) {
-    QualityData.value = res.data.data;
-    let oneList = []
-    let twoDict = {}
-    let selector = []
-    for (let i = 0; i < res.data.data.length; i++) {
-      if (oneList.includes(res.data.data[i].resolution)) {
-        if (!twoDict[res.data.data[i].resolution].includes(res.data.data[i].bitrate)) {
-          twoDict[res.data.data[i].resolution].push(res.data.data[i].bitrate)
-        }
-      } else {
-        oneList.push(res.data.data[i].resolution)
-        twoDict[res.data.data[i].resolution] = [res.data.data[i].bitrate]
+  let res = await COMMON.requests("POST", api, true, _data);
+  QualityData.value = res;
+  let oneList = []
+  let twoDict = {}
+  let selector = []
+  for (let i = 0; i < res.length; i++) {
+    if (oneList.includes(res[i].resolution)) {
+      if (!twoDict[res[i].resolution].includes(res[i].bitrate)) {
+        twoDict[res[i].resolution].push(res[i].bitrate)
       }
+    } else {
+      oneList.push(res[i].resolution)
+      twoDict[res[i].resolution] = [res[i].bitrate]
     }
-
-    for (const item of oneList) {
-      let Bases = {
-        html: item,
-        selector: [],
-
-      }
-      for (const _item of twoDict[item]) {
-        Bases.selector.push(
-            {
-              html: _item,
-            }
-        )
-      }
-      selector.push(Bases)
-    }
-    qualitySelector.value = selector
-
   }
+
+  for (const item of oneList) {
+    let Bases = {
+      html: item,
+      selector: [],
+
+    }
+    for (const _item of twoDict[item]) {
+      Bases.selector.push(
+          {
+            html: _item,
+          }
+      )
+    }
+    selector.push(Bases)
+  }
+  qualitySelector.value = selector
+
+
 }
 
 async function GetPalyUrl() {
@@ -263,11 +255,9 @@ async function GetPalyUrl() {
     "subtitle_guid": "",
     "channels": (StreamList.value.audio_streams.length === 1 ? StreamList.value.audio_streams[0] : StreamList.value.audio_streams.find(o => o.codec_name === "aac")).channels
   };
-  let res = await COMMON.requests("POST", api, _data)
-  if (res.data.code === 0) {
-    urlBase.value = res.data.data.play_link;
-    url.value = COMMON.fnHost + res.data.data.play_link;
-  }
+  let res = await COMMON.requests("POST", api, true, _data)
+  urlBase.value = res.play_link;
+  url.value = COMMON.fnHost + res.play_link;
 }
 
 async function SendPlayRecord() {
@@ -285,7 +275,7 @@ async function SendPlayRecord() {
       "duration": art.duration,
       "play_link": urlBase.value
     }
-    let res = await COMMON.requests("POST", api, data)
+    let res = await COMMON.requests("POST", api, true, data)
   }
 }
 
@@ -296,7 +286,7 @@ async function mediaP(req, playLink) {
     "reqid": "1234567890ABCDEF",
     "playLink": playLink
   }
-  let res = await COMMON.requests("POST", api, data)
+  let res = await COMMON.requests("POST", api, true, data)
 }
 
 async function GetEmoji() {
@@ -426,6 +416,10 @@ async function play_next() {
 
 
 async function ready() {
+
+  await import('../../../public/packages//artplayer-plugin-danmuku.js');
+  art.plugins.add(window.artplayerPluginDanmuku(danmu_setting));
+  // art.plugins.artplayerPluginDanmuku.config(danmu_setting)
   if (timerSendPlayRecord.value !== null) {
     clearInterval(timerSendPlayRecord.value)
   }

@@ -1,17 +1,18 @@
 <script setup>
-import {ref, onMounted, getCurrentInstance} from 'vue'
+import {ref, onMounted, getCurrentInstance, watch} from 'vue'
 import VueCookies from 'vue-cookies';
 import Login from './views/User/Login.vue'
 import {darkTheme} from "naive-ui";
 
 import {useMediaDbData} from './store.js'
+import {onBeforeRouteLeave, onBeforeRouteUpdate, useRoute} from "vue-router";
+import router from "@/router/index.js";
 
 const MediaDbData = useMediaDbData()
 
 // 获取 Vue 实例
 const instance = getCurrentInstance();
 const COMMON = instance.appContext.config.globalProperties.$COMMON;
-let isLogin = ref(false)
 let UserInfo = ref({})
 let load = ref(true)
 let title = COMMON.title
@@ -19,10 +20,11 @@ let collapsed = ref(false);
 const dark = ref(false);
 const theme = ref(null);
 const showSaerch = ref(false);
-const data = ref([])
+const data = ref(null)
 const MediaDbSum = ref({})
 const MediaDbInfo = ref({})
 const ConfigData = ref({})
+const route = useRoute();
 const options = ref([
   {
     label: '注销登录',
@@ -48,71 +50,55 @@ if (collapsedItem === "true") {
 async function GetUserInfo() {
   if (VueCookies.get('authorization') !== null) {
     let api = '/api/v1/user/info'
-    let res = await COMMON.requests("GET", api);
-    if (res.data.code === 0) {
-      isLogin.value = true;
-      UserInfo.value = res.data.data;
-    }
-  } else {
-    isLogin.value = false
+    UserInfo.value = await COMMON.requests("GET", api, true);
   }
   load.value = false;
 }
 
 async function getConfig() {
   let api = '/api/v1/sys/config'
-  let res = await COMMON.requests("GET", api);
-  if (res.data.code === 0) {
-    ConfigData.value = res.data.data;
-    title = res.data.data.server_name;
-    localStorage.setItem("title", title)
+  ConfigData.value = await COMMON.requests("GET", api);
+  if (ConfigData.value !== undefined) {
+    localStorage.setItem("title", ConfigData.value.server_name)
   }
 }
 
 async function GetMediaDbList() {
   let api = '/api/v1/mediadb/list'
-  let res = await COMMON.requests("GET", api);
-  if (res.data.code === 0) {
-    data.value = res.data.data;
-    MediaDbData.list = res.data.data;
-  } else {
-    COMMON.ShowMsg(res.data.msg);
-  }
+  data.value = await COMMON.requests("GET", api, true);
+  MediaDbData.list = data.value
 }
 
 async function GetMediaDbSum() {
   let api = '/api/v1/mediadb/sum'
-  let res = await COMMON.requests("GET", api);
-  if (res.data.code === 0) {
-    MediaDbSum.value = res.data.data;
-  } else {
-    COMMON.ShowMsg(res.data.msg);
-  }
+  MediaDbSum.value = await COMMON.requests("GET", api, true);
 }
 
 async function GetMediaDbInfos() {
   let api = '/api/v1/item/list'
 
-  for (let _d of data.value) {
-    let guid = _d.guid;
-    let _data = {
-      "ancestor_guid": guid,
-      "tags": {
-        "type": [
-          "Movie",
-          "TV",
-          "Directory",
-          "Video"
-        ]
-      },
-      "exclude_grouped_video": 1,
-      "sort_type": MediaDbData.sort_type,
-      "sort_column": MediaDbData.sort_column,
-      "page_size": MediaDbSum.value[guid]
+  if (data.value !== undefined) {
+    for (let _d of data.value) {
+      let guid = _d.guid;
+      let _data = {
+        "ancestor_guid": guid,
+        "tags": {
+          "type": [
+            "Movie",
+            "TV",
+            "Directory",
+            "Video"
+          ]
+        },
+        "exclude_grouped_video": 1,
+        "sort_type": MediaDbData.sort_type,
+        "sort_column": MediaDbData.sort_column,
+        "page_size": MediaDbSum.value[guid]
+      }
+      let res = await COMMON.requests("POST", api, true, _data);
+      MediaDbInfo.value[guid] = res
+      MediaDbData.info[guid] = res
     }
-    let res = await COMMON.requests("POST", api, _data);
-    MediaDbInfo.value[guid] = res.data.data
-    MediaDbData.info[guid] = res.data.data
   }
 
 
@@ -123,10 +109,6 @@ const reF = async () => {
   await onMountedFun();
 };
 
-function LoginUser() {
-  isLogin.value = true;
-  reF();
-}
 
 function toggDrawer() {
   collapsed.value = !collapsed.value;
@@ -167,21 +149,34 @@ function handleSelect(key) {
   }
 }
 
+async function runFunByPath(path, fun) {
+  if (route.path !== path) {
+    await fun()
+  }
+}
+
 async function onMountedFun() {
   // 获取配置
   await getConfig();
-  if (VueCookies.get("authorization") !== null) {
-    // 获取用户信息
-    await GetUserInfo();
-    // 获取分类列表
-    await GetMediaDbList();
-    // 获取每个分类的数量
-    await GetMediaDbSum();
-    // 获取每个分类的列表
-    await GetMediaDbInfos();
-  } else {
-    isLogin.value = false;
-  }
+
+  // 获取用户信息
+  await runFunByPath('/login', GetUserInfo)
+  // await GetUserInfo();
+  // if (VueCookies.get("authorization")) {
+
+  // 获取每个分类的数量
+  await runFunByPath('/login', GetMediaDbSum)
+  // await GetMediaDbSum();
+
+  // 获取分类列表
+  await runFunByPath('/login', GetMediaDbList)
+  // await GetMediaDbList();
+
+  // 获取每个分类的列表
+  await runFunByPath('/login', GetMediaDbInfos)
+  // await GetMediaDbInfos();
+  // }
+
   document.title = title;
   load.value = false;
 }
@@ -189,6 +184,15 @@ async function onMountedFun() {
 onMounted(async () => {
   await onMountedFun();
 })
+
+// 监听路由变化
+watch(
+    () => route.fullPath,
+    async (newPath, oldPath) => {
+      await onMountedFun();
+    }
+);
+
 
 </script>
 
@@ -198,7 +202,7 @@ onMounted(async () => {
     <n-message-provider>
       <n-notification-provider>
         <n-dialog-provider>
-          <n-layout v-if="isLogin" :class='[dark ? "dark" : "light", "home"]'>
+          <n-layout v-if="route.path !== '/login'" :class='[dark ? "dark" : "light", "home"]'>
             <n-layout-header bordered>
               <div class="header-content">
                 <n-space>
@@ -310,9 +314,7 @@ onMounted(async () => {
               </n-card>
             </n-modal>
           </n-layout>
-          <div v-else>
-            <Login @is-login="LoginUser()" :isLogin="isLogin" :title="title"></Login>
-          </div>
+          <router-view v-else/>
         </n-dialog-provider>
       </n-notification-provider>
     </n-message-provider>

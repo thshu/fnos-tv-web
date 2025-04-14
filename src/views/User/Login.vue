@@ -1,31 +1,26 @@
 <script setup>
 import VueCookies from 'vue-cookies';
 import {ref, getCurrentInstance} from "vue";
+import {useRouter} from "vue-router";
 // 获取 Vue 实例
 const instance = getCurrentInstance();
 const COMMON = instance.appContext.config.globalProperties.$COMMON;
-const emit = defineEmits(["is-login"]);
-
-const {title, isLogin} = defineProps(['title', 'isLogin'])
+const router = useRouter();
 const content = ""
 const user = ref({
   "username": "",
   "password": "",
   "app_name": "trimemedia-web"
 })
+let title = COMMON.title
+
 
 async function LoginUser() {
   let api = "/api/v1/login"
-  let res = await COMMON.requests("POST", api, user.value)
-  if (res.data.code === 0) {
-    VueCookies.set('authorization', res.data.data.token, 60 * 60 * 24 * 7)
-    COMMON.ShowMsg('登录成功！')
-    setTimeout(function () {
-      emit('is-login');
-    }, 2000)
-  } else {
-    COMMON.ShowMsg(res.data.msg)
-  }
+  let res = await COMMON.requests("POST", api, false, user.value)
+  VueCookies.set('authorization', res.token)
+  COMMON.ShowMsg('登录成功！')
+  await router.push('/');
 
 }
 </script>

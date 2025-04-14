@@ -3,6 +3,7 @@ import md5 from 'js-md5';
 import axios from 'axios';
 import VueCookies from 'vue-cookies';
 import Snackbar from 'node-snackbar';
+import router from "@/router/index.js";
 
 // 定义一些公共的属性和方法
 let title = 'FNOS';
@@ -10,10 +11,106 @@ let fnHost = "/fnos";
 let apiUrl = `${fnHost}/v`;
 let imgUrl = `${apiUrl}/api/v1/sys/img`
 const isMo = /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent);
-// 设置请求前缀
-axios.defaults.baseURL = apiUrl
 
 let api_key = "16CCEB3D-AB42-077D-36A1-F355324E4237"
+
+function GetSigin(config) {
+
+  return generateSignature({
+    'method': config.method,
+    'url': "/v" + config.url,
+    'data': config.data ? config.data : {}
+  }, api_key);
+}
+
+
+function instanceRequestBase(config) {
+  config.headers.authx = GetSigin(config);
+  return config;
+}
+
+function instanceResponseBase(config) {
+  return config;
+}
+
+const NoLoginInstance = axios.create({
+  baseURL: apiUrl
+})
+const LoginInstance = axios.create({
+  baseURL: apiUrl
+})
+// 登录使用的拦截器
+LoginInstance.interceptors.request.use(
+    config => {
+      let authorization = VueCookies.get("authorization")
+      if (!authorization) {
+        console.log('跳转登录页')
+        router.push('/login')
+      }
+      config.headers.Authorization = authorization;
+      config = instanceRequestBase(config);
+      return config;
+    }
+)
+
+LoginInstance.interceptors.response.use(
+    response => {
+      let code = response.data.code
+      if (code === -2) {
+        console.log(12)
+        router.push('/login')
+        return
+      }
+      if (code === 0) {
+        return response.data.data;
+      }
+      return Promise.reject(response);
+    },
+    error => {
+      if (axios.isCancel(error) || error.name === 'CanceledError') {
+        return; // 不报错，静默处理
+      }
+      return Promise.reject(error);
+    }
+)
+
+// 非登录使用的拦截器
+NoLoginInstance.interceptors.request.use(
+    config => {
+      config = instanceRequestBase(config);
+      return config
+    }
+)
+
+NoLoginInstance.interceptors.response.use(
+    response => {
+      let code = response.data.code
+      if (code === 0) {
+        return response.data.data;
+      }
+      ShowMsg(response.data.msg)
+      return Promise.reject(response);
+    },
+    error => {
+      if (axios.isCancel(error) || error.name === 'CanceledError') {
+        return; // 不报错，静默处理
+      }
+      return Promise.reject(error);
+    }
+)
+
+async function requests(method, uri, isLogin = false, data = {}) {
+  let instance = LoginInstance;
+  if (!isLogin) {
+    instance = NoLoginInstance;
+  }
+  if (method === "POST") {
+    return await instance.post(uri, data)
+  } else {
+    return await instance.get(uri)
+  }
+
+}
 
 
 function ShowMsg(msg) {
@@ -90,29 +187,6 @@ function generateSignature(o, s = "") {
   }
 }
 
-async function requests(method, uri, data = {}) {
-
-  const sigin = generateSignature({
-    'method': method,
-    'url': "/v" + uri,
-    'data': data
-  }, api_key)
-  let headers = {
-    'content-type': 'application/json',
-    'Authorization': VueCookies.get("authorization"),
-    'authx': sigin
-  }
-  if (method === "POST") {
-    return await axios.post(uri, data, {
-      headers: headers
-    })
-  } else {
-    return await axios.get(uri, {
-      headers: headers
-    })
-  }
-
-}
 
 initConfig()
 // 暴露出这些属性和方法

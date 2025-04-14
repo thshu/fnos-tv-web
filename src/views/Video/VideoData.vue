@@ -27,14 +27,12 @@ gallery_type.value = proxy.$route.query.gallery_type
 // 获取剧集信息
 async function GetVideoData() {
   let api = "/api/v1/item/" + guid.value;
-  let res = await COMMON.requests("GET", api)
-  if (res.data.code === 0) {
-    VideoDataInfo.value = res.data.data;
-    if (res.data.data.backdrops !== undefined) {
-      backImg.value = COMMON.imgUrl + "/92/17/" + res.data.data.backdrops + "?w=200"
-    } else {
-      backImg.value = COMMON.imgUrl + "/92/17/" + VideoDataInfo.value.posters + "?w=200"
-    }
+  let res = await COMMON.requests("GET", true, api)
+  VideoDataInfo.value = res;
+  if (res.data.data.backdrops !== undefined) {
+    backImg.value = COMMON.imgUrl + "/92/17/" + res.backdrops + "?w=200"
+  } else {
+    backImg.value = COMMON.imgUrl + "/92/17/" + VideoDataInfo.value.posters + "?w=200"
     // play_guid.value = VideoDataInfo.value.type === "Movie"?VideoDataInfo.value.guid:  VideoDataInfo.value.play_item_guid
   }
 }
@@ -42,10 +40,7 @@ async function GetVideoData() {
 // 获取季信息
 async function GetSeasonData() {
   let api = "/api/v1/season/list/" + guid.value;
-  let res = await COMMON.requests("GET", api)
-  if (res.data.code === 0) {
-    SeasonData.value = res.data.data
-  }
+  SeasonData.value = await COMMON.requests("GET", true, api)
 }
 
 // 获取播放信息
@@ -54,31 +49,23 @@ async function GetPayInfo() {
   let _data = {
     "item_guid": guid.value
   }
-  let res = await COMMON.requests("POST", api, _data)
-  if (res.data.code === 0) {
-    playInfo.value = res.data.data;
-    play_guid.value = playInfo.value.item.guid;
-  }
+  playInfo.value = await COMMON.requests("POST", api, true, _data);
+  play_guid.value = playInfo.value.item.guid;
 }
 
 async function GetPersonList() {
   let api = "/api/v1/person/list/" + guid.value;
-  let res = await COMMON.requests("POST", api)
-  if (res.data.code === 0) {
-    PersonList.value = res.data.data.list.filter(o => o.role !== "");
-  }
+  let res = await COMMON.requests("POST", api, true)
+  PersonList.value = res.list.filter(o => o.role !== "");
 }
 
 async function GetEpisodeList() {
   let api = "/api/v1/episode/list/" + guid.value;
-  let res = await COMMON.requests("GET", api)
-  if (res.data.code === 0) {
-    EpisodeList.value = res.data.data;
-    // 滚动到当前观看集
-    setTimeout(function () {
-      goToSlide(playInfo.value.item.episode_number - 1)
-    }, 10)
-  }
+  EpisodeList.value = await COMMON.requests("GET", api, true);
+  // 滚动到当前观看集
+  setTimeout(function () {
+    goToSlide(playInfo.value.item.episode_number - 1)
+  }, 10)
 }
 
 async function Play(_guid = play_guid.value) {

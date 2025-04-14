@@ -14,10 +14,7 @@ const EpisodeCarouselRef = ref(null);
 
 async function GetPlayList() {
   let api = "/api/v1/play/list"
-  let res = await COMMON.requests("GET", api);
-  if (res.data.code === 0) {
-    playList.value = res.data.data;
-  }
+  playList.value = await COMMON.requests("GET", api, true);
 }
 
 // 下一张
@@ -68,7 +65,8 @@ onMounted(async () => {
                   <div class="view-item-title">
                     {{ item.type === 'Episode' ? item.tv_title : item.title }}
                   </div>
-                  <div v-if="item.type === 'Episode'" class="view-item-title" style="font-size: 0.8em;color:rgba(0, 0, 0, 0.4);">
+                  <div v-if="item.type === 'Episode'" class="view-item-title"
+                       style="font-size: 0.8em;color:rgba(0, 0, 0, 0.4);">
                     第 {{ item.season_number }} 季·第 {{ item.episode_number }} 集
                   </div>
                   <div v-else class="view-item-title" style="font-size: 0.8em;color:rgba(0, 0, 0, 0.4);">

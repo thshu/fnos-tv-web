@@ -70,8 +70,8 @@ async function GetMediaDbInfos() {
     "sort_column": MediaDbData.sort_column.value,
     "page_size": size.value
   }
-  let res = await COMMON.requests("POST", api, _data);
-  MediaDbInfo.value = res.data.data.list
+  let res = await COMMON.requests("POST", api, true, _data);
+  MediaDbInfo.value = res.list
 
 }
 
