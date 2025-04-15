@@ -29,5 +29,6 @@ app.config.globalProperties.$COMMON = global;
 app.mount('#app')
 
 app.config.errorHandler = (err, instance, info) => {
-    Snackbar.show({pos: 'top-center', text: err, showAction: false});
+    // console.error(err, instance, info)
+    // Snackbar.show({pos: 'top-center', text: err, showAction: false});
 };
