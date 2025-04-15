@@ -110,7 +110,7 @@ const reF = async () => {
 
 function toggDrawer() {
   collapsed.value = !collapsed.value;
-  VueCookies.set("collapsed", collapsed);
+  VueCookies.set("collapsed", collapsed.value);
 }
 
 function Home() {
