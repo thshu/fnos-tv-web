@@ -5,6 +5,8 @@ import {getCurrentInstance, onMounted, onBeforeUnmount, ref} from "vue";
 
 import Artplayer from "./ArtPlayer.vue";
 import {onBeforeRouteLeave, onBeforeRouteUpdate} from "vue-router";
+import VueCookies from "vue-cookies";
+import axios from "axios";
 // import artplayerPluginDanmuku from "artplayer-plugin-danmuku";
 
 const instance = getCurrentInstance();
@@ -140,7 +142,20 @@ const setting = ref({
   moreVideoAttr: {
     crossOrigin: 'anonymous',
   },
-  settings: [],
+  settings: [
+    {
+      name: "跳过片头片尾",
+      html: '跳过片头片尾',
+      tooltip: VueCookies.get('skip') === null ? "打开" : (VueCookies ? "打开" : "关闭"),
+      switch: VueCookies.get('skip') === null ? true : VueCookies.get('skip'),
+      onSwitch: function (item, $dom, event) {
+        VueCookies.set('skip', !item.switch);
+        const nextState = !item.switch;
+        item.tooltip = nextState ? '打开' : '关闭';
+        return nextState;
+      },
+    }
+  ],
   controls: [
     // {
     //     position: 'right',
@@ -179,6 +194,18 @@ const ArtplayerStyle = {
   // 可选：不让它超过视口高度，避免滚动
   maxHeight: 'calc(100vh - 150px)',
   margin: '0 auto',
+}
+
+const debounce = (fn, delay) => {
+  let timer = null;
+  return function () {
+    let context = this;
+    let args = arguments;
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      fn.apply(context, args);
+    }, delay);
+  }
 }
 
 const loadDanmuku = () => () => new Promise(resolve => {
@@ -288,9 +315,21 @@ async function SendPlayRecord() {
       "bitrate": QualityData.value[0].bitrate,
       "ts": Math.floor(art.currentTime),
       "duration": art.duration,
-      "play_link": urlBase.value
+      "play_link": urlBase.value,
+      "create_time": Math.floor(Date.now() / 1000),
+      "playback_speed": art.playbackRate,
+      "guid": guid.value,
     }
     let res = await COMMON.requests("POST", api, true, data)
+  }
+}
+
+async function GetSkipList() {
+  const instance = axios.create()
+  let api = "/api/skipList?guid=" + guid.value
+  let res = await instance.get(api)
+  if (res.data.code === 0) {
+    skipList.value = res.data.data
   }
 }
 
@@ -410,6 +449,9 @@ async function UpdateControl(_art) {
 }
 
 async function play() {
+  if (timerSendPlayRecord.value !== null) {
+    clearInterval(timerSendPlayRecord.value)
+  }
   let playLink = urlBase.value;
   await GetPayInfo();
   await GetStreamList();
@@ -431,10 +473,12 @@ async function play_next() {
 
 
 async function ready() {
-
-  // 加载自己修改的弹幕js
-  await import('../../../public/packages//artplayer-plugin-danmuku.js');
-  art.plugins.add(window.artplayerPluginDanmuku(danmu_setting));
+  await GetSkipList();
+  if (!art.plugins.hasOwnProperty("artplayerPluginDanmuku")) {
+    // 加载自己修改的弹幕js
+    await import('../../../public/packages//artplayer-plugin-danmuku.js');
+    art.plugins.add(window.artplayerPluginDanmuku(danmu_setting));
+  }
   // art.plugins.artplayerPluginDanmuku.config(danmu_setting)
   if (timerSendPlayRecord.value !== null) {
     clearInterval(timerSendPlayRecord.value)
@@ -476,22 +520,25 @@ const artF = async (data) => {
     localStorage.playbackRate = art.playbackRate;
   });
   art.on("video:timeupdate", () => {
-    var params = new URLSearchParams(window.location.search);
-    if (params.get("gallery_type") === "TV") {
-      var duration = art.duration;
-      var tail_time = EpisodeList.value.tail_time;
-      if (tail_time > duration / 3) {
-        return
-      }
-      art.storage.name = 'skip';
-      var is_skip = art.storage.get('skip');
-      art.storage.name = 'artplayer_settings';
+    debounce(function () {
+      if (gallery_type.value === "TV") {
+        var currentTime = art.currentTime;  // 当前时间
 
-      if ((art.currentTime + tail_time) > duration && (is_skip === undefined || is_skip)) {
-        art.currentTime = 1
-        play_next()
+        var skipData = skipList.value.find(o => currentTime > o.skipped_start && currentTime < o.skipped_end);  // 查找匹配的跳过数据
+        if (currentTime > art.duration / 3) {
+          return
+        }
+        var is_skip = VueCookies.get('skip');
+
+        if ((skipData !== undefined) && (is_skip === null || is_skip) && !(art.currentTime < skipData.skipped_start || art.currentTime > skipData.skipped_end)) {
+          // art.currentTime = 1
+          COMMON.ShowMsg("当前内容跳过")
+          art.currentTime = skipData.skipped_end;
+        }
+
       }
-    }
+    }, 10)()
+
   })
   art.on('video:ended', () => {
     play_next()

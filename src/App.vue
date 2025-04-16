@@ -158,21 +158,21 @@ async function onMountedFun() {
   await getConfig();
 
   // 获取用户信息
-  await runFunByPath('/login', GetUserInfo)
-  // await GetUserInfo();
+  // await runFunByPath('/login', GetUserInfo)
+  await GetUserInfo();
   // if (VueCookies.get("authorization")) {
 
   // 获取每个分类的数量
-  await runFunByPath('/login', GetMediaDbSum)
-  // await GetMediaDbSum();
+  // await runFunByPath('/login', GetMediaDbSum)
+  await GetMediaDbSum();
 
   // 获取分类列表
-  await runFunByPath('/login', GetMediaDbList)
-  // await GetMediaDbList();
+  // await runFunByPath('/login', GetMediaDbList)
+  await GetMediaDbList();
 
   // 获取每个分类的列表
-  await runFunByPath('/login', GetMediaDbInfos)
-  // await GetMediaDbInfos();
+  // await runFunByPath('/login', GetMediaDbInfos)
+  await GetMediaDbInfos();
   // }
 
   document.title = title;
@@ -293,6 +293,9 @@ watch(
                 <router-view v-on:refApp="RefAppData()"/>
               </n-layout>
             </n-layout>
+            <n-layout-footer position="absolute" style="height: 64px; padding: 24px" bordered>
+              @2023
+            </n-layout-footer>
             <n-modal v-model:show="showSaerch" transform-origin="center">
               <n-card style="width: 600px" title="搜索" :bordered="false" size="huge" role="dialog"
                       aria-modal="true">
