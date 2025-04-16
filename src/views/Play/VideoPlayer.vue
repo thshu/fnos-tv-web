@@ -25,6 +25,7 @@ const showModal = ref(false);
 const loading = ref(true);
 const urlBase = ref(null);
 const url = ref(null);
+const skipList = ref([]);
 const timerSendPlayRecord = ref(null);
 const emojos = ref(null);
 
