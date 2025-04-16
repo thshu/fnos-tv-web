@@ -1,18 +1,21 @@
 <script setup>
 import VueCookies from 'vue-cookies';
-import {ref, getCurrentInstance} from "vue";
-import {useRouter} from "vue-router";
+import {ref, getCurrentInstance, onMounted, watch} from "vue";
+import {useRoute, useRouter} from "vue-router";
+import axios from "axios";
 // 获取 Vue 实例
 const instance = getCurrentInstance();
 const COMMON = instance.appContext.config.globalProperties.$COMMON;
 const router = useRouter();
 const content = ""
+const ConfigData = ref(null)
 const user = ref({
   "username": "",
   "password": "",
   "app_name": "trimemedia-web"
 })
 let title = COMMON.title
+const route = useRoute()
 
 
 async function LoginUser() {
@@ -21,8 +24,52 @@ async function LoginUser() {
   VueCookies.set('authorization', res.token)
   COMMON.ShowMsg('登录成功！')
   await router.push('/');
-
 }
+
+async function NasLogin(code) {
+  let api = "/api/v1/auth"
+  let data = {
+    "source": "Trim-NAS",
+    "code": code
+  }
+  let res = await COMMON.requests("POST", api, false, data)
+  VueCookies.set('authorization', res.token)
+  COMMON.ShowMsg('登录成功！')
+  window.opener.location.href = '/' // 父窗口跳转
+  window.close() // 关闭当前窗口
+}
+
+async function getConfig() {
+  let api = '/api/v1/sys/config'
+  ConfigData.value = await COMMON.requests("GET", api);
+  if (ConfigData.value !== undefined) {
+    localStorage.setItem("title", ConfigData.value.server_name)
+  }
+}
+
+async function GetFnUrl(){
+  const instance = axios.create()
+  let api = "/api/getFnUrl"
+  let res = await instance.get(api)
+  return res.data;
+}
+
+async function OpenNasLogin() {
+  let fnUrl = await GetFnUrl();
+  window.open(`${fnUrl}/signin?client_id=${ConfigData.value.nas_oauth.app_id}&redirect_uri=${window.location.href}`, '_blank', 'width=600,height=400')
+}
+
+onMounted(async () => {
+  await getConfig();
+  if (route.query.code !== undefined) {
+    await NasLogin(route.query.code);
+  }
+})
+
+watch(() => route.query.code, (code) => {
+  console.log('code 值变化了:', code)
+})
+
 </script>
 
 <template>
@@ -55,6 +102,9 @@ async function LoginUser() {
             </div>
             <div class="form-control">
               <button class="btn login-btn" @click="LoginUser">登录</button>
+            </div>
+            <div class="form-control">
+              <button class="btn login-btn" @click="OpenNasLogin" style="background: #1A1E23">NAS登录</button>
             </div>
             <!-- <div class="tool">
                 <h4></h4>

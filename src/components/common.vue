@@ -44,8 +44,19 @@ LoginInstance.interceptors.request.use(
     config => {
       let authorization = VueCookies.get("authorization")
       if (!authorization) {
-        console.log('跳转登录页')
-        router.push('/login')
+        const params = new URLSearchParams(window.location.search)
+        const code = params.get('code')
+        if (code !== null) {
+          router.push({
+            path: '/login',
+            query: {
+              code: code  // 带上原始跳转来源
+            }
+          })
+        }
+        else {
+          router.push('/login')
+        }
       }
       config.headers.Authorization = authorization;
       config = instanceRequestBase(config);
@@ -57,7 +68,6 @@ LoginInstance.interceptors.response.use(
     response => {
       let code = response.data.code
       if (code === -2) {
-        console.log(12)
         router.push('/login')
         return
       }
