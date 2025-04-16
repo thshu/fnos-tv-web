@@ -143,20 +143,7 @@ const setting = ref({
   moreVideoAttr: {
     crossOrigin: 'anonymous',
   },
-  settings: [
-    {
-      name: "跳过片头片尾",
-      html: '跳过片头片尾',
-      tooltip: VueCookies.get('skip') === null ? "打开" : (VueCookies ? "打开" : "关闭"),
-      switch: VueCookies.get('skip') === null ? true : VueCookies.get('skip'),
-      onSwitch: function (item, $dom, event) {
-        VueCookies.set('skip', !item.switch);
-        const nextState = !item.switch;
-        item.tooltip = nextState ? '打开' : '关闭';
-        return nextState;
-      },
-    }
-  ],
+  settings: [],
   controls: [
     // {
     //     position: 'right',
@@ -187,7 +174,6 @@ const setting = ref({
     // window.artplayerPluginDanmuku(danmu_setting)
   ],
 })
-
 const ArtplayerStyle = {
   width: '100%',
   // 用 vw 单位保持 16:9：100vw * 9 / 16 = 56.25vw
@@ -447,6 +433,19 @@ async function UpdateControl(_art) {
   for (let item of forData) {
     await addArtConfig(_art, 'controls', item)
   }
+
+  await addArtConfig(_art, 'setting', {
+    name: "跳过片头片尾",
+    html: '跳过片头片尾',
+    tooltip: VueCookies.get('skip') === null ? "打开" : (VueCookies.get('skip') ? "打开" : "关闭"),
+    switch: VueCookies.get('skip') === null ? true : VueCookies.get('skip'),
+    onSwitch: function (item, $dom, event) {
+      VueCookies.set('skip', !item.switch);
+      const nextState = !item.switch;
+      item.tooltip = nextState ? '打开' : '关闭';
+      return nextState;
+    },
+  })
 }
 
 async function play() {
@@ -529,7 +528,7 @@ const artF = async (data) => {
         if (currentTime > art.duration / 3) {
           return
         }
-        var is_skip = VueCookies.get('skip');
+        var is_skip = VueCookies.get('skip') === 'true';
 
         if ((skipData !== undefined) && (is_skip === null || is_skip) && !(art.currentTime < skipData.skipped_start || art.currentTime > skipData.skipped_end)) {
           // art.currentTime = 1
