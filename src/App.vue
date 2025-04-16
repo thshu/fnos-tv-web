@@ -17,7 +17,6 @@ let title = COMMON.title
 let collapsed = ref(false);
 const dark = ref(false);
 const theme = ref(null);
-const showSaerch = ref(false);
 const data = ref(null)
 const MediaDbSum = ref({})
 const MediaDbInfo = ref({})
@@ -220,11 +219,6 @@ watch(
                       <i v-else class='bx bx-moon'></i>
                     </template>
                   </n-button>
-                  <n-button @click="(showSaerch = !showSaerch)" circle>
-                    <template #icon>
-                      <i class='bx bx-search'></i>
-                    </template>
-                  </n-button>
 
                   <n-dropdown trigger="hover" placement="bottom-start" :options="options"
                               @select="handleSelect">
@@ -236,7 +230,7 @@ watch(
                 </n-space>
               </div>
             </n-layout-header>
-            <n-layout position="absolute" style="top: 60px; bottom: 60px" has-sider>
+            <n-layout position="absolute" style="top: 60px;" has-sider>
               <n-layout-sider :collapsed="collapsed" collapse-mode="width" :collapsed-width="0" :width="240"
                               :native-scrollbar="false" bordered>
                 <div class="sider-item">
@@ -290,27 +284,9 @@ watch(
                 </div>
               </n-layout-sider>
               <n-layout :native-scrollbar="false">
-                <router-view v-on:refApp="RefAppData()"/>
+                <router-view />
               </n-layout>
             </n-layout>
-            <n-layout-footer position="absolute" style="height: 64px; padding: 24px" bordered>
-              @2023
-            </n-layout-footer>
-            <n-modal v-model:show="showSaerch" transform-origin="center">
-              <n-card style="width: 600px" title="搜索" :bordered="false" size="huge" role="dialog"
-                      aria-modal="true">
-                <template #header-extra>
-                  <n-button @click="(showSaerch = !showSaerch)" strong secondary circle>
-                    <i class='bx bx-x'></i>
-                  </n-button>
-                </template>
-                <n-input @keyup.enter="Search()" v-model:value="q" type="text" size="large" placeholder="">
-                  <template #prefix>
-                    <i class='bx bx-search'></i>
-                  </template>
-                </n-input>
-              </n-card>
-            </n-modal>
           </n-layout>
           <router-view v-else/>
         </n-dialog-provider>
