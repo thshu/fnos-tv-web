@@ -11,6 +11,7 @@ import Snackbar from 'node-snackbar';
 
 import "node-snackbar/dist/snackbar.min.css"
 import 'boxicons/css/boxicons.min.css'
+import './registerServiceWorker'
 
 // 创建一个实例
 const app = createApp(App);
