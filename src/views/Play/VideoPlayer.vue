@@ -312,12 +312,12 @@ async function SendPlayRecord() {
 }
 
 async function GetSkipList() {
-  const instance = axios.create()
-  let api = "/api/skipList?guid=" + guid.value
-  let res = await instance.get(api)
-  if (res.data.code === 0) {
-    skipList.value = res.data.data
-  }
+  // const instance = axios.create()
+  // let api = "/api/skipList?guid=" + guid.value
+  // let res = await instance.get(api)
+  // if (res.data.code === 0) {
+  //   skipList.value = res.data.data
+  // }
 }
 
 async function mediaP(req, playLink) {
@@ -434,18 +434,18 @@ async function UpdateControl(_art) {
     await addArtConfig(_art, 'controls', item)
   }
 
-  await addArtConfig(_art, 'setting', {
-    name: "跳过片头片尾",
-    html: '跳过片头片尾',
-    tooltip: VueCookies.get('skip') === null ? "打开" : (VueCookies.get('skip') ? "打开" : "关闭"),
-    switch: VueCookies.get('skip') === null ? true : VueCookies.get('skip'),
-    onSwitch: function (item, $dom, event) {
-      VueCookies.set('skip', !item.switch);
-      const nextState = !item.switch;
-      item.tooltip = nextState ? '打开' : '关闭';
-      return nextState;
-    },
-  })
+  // await addArtConfig(_art, 'setting', {
+  //   name: "跳过片头片尾",
+  //   html: '跳过片头片尾',
+  //   tooltip: VueCookies.get('skip') === null ? "打开" : (VueCookies.get('skip') ? "打开" : "关闭"),
+  //   switch: VueCookies.get('skip') === null ? true : VueCookies.get('skip'),
+  //   onSwitch: function (item, $dom, event) {
+  //     VueCookies.set('skip', !item.switch);
+  //     const nextState = !item.switch;
+  //     item.tooltip = nextState ? '打开' : '关闭';
+  //     return nextState;
+  //   },
+  // })
 }
 
 async function play() {
@@ -520,24 +520,24 @@ const artF = async (data) => {
     localStorage.playbackRate = art.playbackRate;
   });
   art.on("video:timeupdate", () => {
-    debounce(function () {
-      if (gallery_type.value === "TV") {
-        var currentTime = art.currentTime;  // 当前时间
-
-        var skipData = skipList.value.find(o => currentTime > o.skipped_start && currentTime < o.skipped_end);  // 查找匹配的跳过数据
-        if (currentTime > art.duration / 3) {
-          return
-        }
-        var is_skip = VueCookies.get('skip') === 'true';
-
-        if ((skipData !== undefined) && (is_skip === null || is_skip) && !(art.currentTime < skipData.skipped_start || art.currentTime > skipData.skipped_end)) {
-          // art.currentTime = 1
-          COMMON.ShowMsg("当前内容跳过")
-          art.currentTime = skipData.skipped_end;
-        }
-
-      }
-    }, 10)()
+    // debounce(function () {
+    //   if (gallery_type.value === "TV") {
+    //     var currentTime = art.currentTime;  // 当前时间
+    //
+    //     var skipData = skipList.value.find(o => currentTime > o.skipped_start && currentTime < o.skipped_end);  // 查找匹配的跳过数据
+    //     if (currentTime > art.duration / 3) {
+    //       return
+    //     }
+    //     var is_skip = VueCookies.get('skip') === 'true';
+    //
+    //     if ((skipData !== undefined) && (is_skip === null || is_skip) && !(art.currentTime < skipData.skipped_start || art.currentTime > skipData.skipped_end)) {
+    //       // art.currentTime = 1
+    //       COMMON.ShowMsg("当前内容跳过")
+    //       art.currentTime = skipData.skipped_end;
+    //     }
+    //
+    //   }
+    // }, 10)()
 
   })
   art.on('video:ended', () => {
