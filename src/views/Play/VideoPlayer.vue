@@ -353,14 +353,22 @@ async function putVideoConfig() {
     list: [],
     url: []
   }
-  for (let item of seasonConfig.value.list) {
-    if (!(item.startTime === 0 && item.endTime === 0)) {
-      sendData.list.push(item)
+  if (seasonConfig.value.list !== undefined) {
+    for (let item of seasonConfig.value.list) {
+      if (!(item.startTime === 0 && item.endTime === 0)) {
+        if (item.endTime === null){
+          // 如果endtime为空，直接跳到最后
+          item.endTime = art.duration
+        }
+        sendData.list.push(item)
+      }
     }
   }
-  for (let item of seasonConfig.value.url) {
-    if (item.url !== "" && item.url !== null && item.url !== undefined) {
-      sendData.url.push(item)
+  if (seasonConfig.value.url !== undefined) {
+    for (let item of seasonConfig.value.url) {
+      if (item.url !== "" && item.url !== null && item.url !== undefined) {
+        sendData.url.push(item)
+      }
     }
   }
   try {
