@@ -25,7 +25,10 @@ const showModal = ref(false);
 const loading = ref(true);
 const urlBase = ref(null);
 const url = ref(null);
-const skipList = ref([]);
+const playUrl = ref(null);
+const skipList = ref([])
+const seasonConfig = ref({})
+const showSetUp = ref(false)
 const timerSendPlayRecord = ref(null);
 const emojos = ref(null);
 
@@ -197,10 +200,13 @@ const debounce = (fn, delay) => {
 
 const loadDanmuku = () => () => new Promise(resolve => {
   let episode_number = playInfo.value.episode_number === undefined ? 1 : playInfo.value.episode_number;
-  let danmuku = `/danmu/get?douban_id=${playInfo.value.douban_id}&episode_number=${episode_number}`;
+  let season = playInfo.value.type !== "Movie";
+  let title = season ? playInfo.value.tv_title : playInfo.value.title
+  let season_number = season ? playInfo.value.season_number : 1
+  let danmuku = `/danmu/get?douban_id=${playInfo.value.douban_id}&episode_number=${episode_number}&title=${title}&season_number=${season_number}&season=${season}&guid=${episode_guid.value}`;
   fetch(danmuku)
       .then(res => res.json())
-      .then(json => resolve(json[episode_number]))
+      .then(json => resolve(episode_number in json ? json[episode_number] : []))
 })
 
 // 切换清晰度
@@ -287,6 +293,7 @@ async function GetPalyUrl() {
   let res = await COMMON.requests("POST", api, true, _data)
   urlBase.value = res.play_link;
   url.value = COMMON.fnHost + res.play_link;
+  playUrl.value = window.location.origin + url.value
 }
 
 async function SendPlayRecord() {
@@ -339,7 +346,50 @@ async function GetEmoji() {
   } catch {
     emojos.value = []
   }
+}
 
+async function putVideoConfig() {
+  let sendData = {
+    list: [],
+    url: []
+  }
+  for (let item of seasonConfig.value.list) {
+    if (!(item.startTime === 0 && item.endTime === 0)) {
+      sendData.list.push(item)
+    }
+  }
+  for (let item of seasonConfig.value.url) {
+    if (item.url !== "" && item.url !== null && item.url !== undefined) {
+      sendData.url.push(item)
+    }
+  }
+  try {
+    let api = "/api/videoConfig?episode_guid=" + episode_guid.value + "&guid=" + guid.value
+    let res = await fetch(api, {
+      method: 'POST', // 请求方法
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(sendData) // 请求体内容
+    })
+    let res_json = await res.json()
+    skipList.value = sendData.list
+    seasonConfig.value = sendData
+    art.plugins.artplayerPluginDanmuku.load();
+  } catch {
+  }
+  showSetUp.value = false;
+
+}
+
+async function getVideoConfig() {
+  try {
+    let api = "/api/videoConfig?episode_guid=" + episode_guid.value + "&guid=" + guid.value
+    let res = await fetch(api)
+    seasonConfig.value = await res.json();
+    skipList.value = seasonConfig.value.list
+  } catch (err) {
+  }
 }
 
 async function addArtConfig(_art, key, v) {
@@ -434,18 +484,18 @@ async function UpdateControl(_art) {
     await addArtConfig(_art, 'controls', item)
   }
 
-  // await addArtConfig(_art, 'setting', {
-  //   name: "跳过片头片尾",
-  //   html: '跳过片头片尾',
-  //   tooltip: VueCookies.get('skip') === null ? "打开" : (VueCookies.get('skip') ? "打开" : "关闭"),
-  //   switch: VueCookies.get('skip') === null ? true : VueCookies.get('skip'),
-  //   onSwitch: function (item, $dom, event) {
-  //     VueCookies.set('skip', !item.switch);
-  //     const nextState = !item.switch;
-  //     item.tooltip = nextState ? '打开' : '关闭';
-  //     return nextState;
-  //   },
-  // })
+  await addArtConfig(_art, 'setting', {
+    name: "跳过片头片尾",
+    html: '跳过片头片尾',
+    tooltip: VueCookies.get('skip') === null ? "打开" : (VueCookies.get('skip') ? "打开" : "关闭"),
+    switch: VueCookies.get('skip') === null ? true : VueCookies.get('skip'),
+    onSwitch: function (item, $dom, event) {
+      VueCookies.set('skip', !item.switch);
+      const nextState = !item.switch;
+      item.tooltip = nextState ? '打开' : '关闭';
+      return nextState;
+    },
+  })
 }
 
 async function play() {
@@ -474,6 +524,7 @@ async function play_next() {
 
 async function ready() {
   await GetSkipList();
+  await getVideoConfig();
   if (!art.plugins.hasOwnProperty("artplayerPluginDanmuku")) {
     // 加载自己修改的弹幕js
     await import('../../../public/packages//artplayer-plugin-danmuku.js');
@@ -520,24 +571,24 @@ const artF = async (data) => {
     localStorage.playbackRate = art.playbackRate;
   });
   art.on("video:timeupdate", () => {
-    // debounce(function () {
-    //   if (gallery_type.value === "TV") {
-    //     var currentTime = art.currentTime;  // 当前时间
-    //
-    //     var skipData = skipList.value.find(o => currentTime > o.skipped_start && currentTime < o.skipped_end);  // 查找匹配的跳过数据
-    //     if (currentTime > art.duration / 3) {
-    //       return
-    //     }
-    //     var is_skip = VueCookies.get('skip') === 'true';
-    //
-    //     if ((skipData !== undefined) && (is_skip === null || is_skip) && !(art.currentTime < skipData.skipped_start || art.currentTime > skipData.skipped_end)) {
-    //       // art.currentTime = 1
-    //       COMMON.ShowMsg("当前内容跳过")
-    //       art.currentTime = skipData.skipped_end;
-    //     }
-    //
-    //   }
-    // }, 10)()
+    debounce(function () {
+      if (gallery_type.value === "TV") {
+        var currentTime = art.currentTime;  // 当前时间
+
+        var skipData = skipList.value.find(o => currentTime > o.startTime && currentTime < o.endTime);  // 查找匹配的跳过数据
+        if (currentTime > art.duration / 3) {
+          return
+        }
+        var is_skip = VueCookies.get('skip') === 'true';
+
+        if ((skipData !== undefined) && (is_skip === null || is_skip) && !(art.currentTime < skipData.startTime || art.currentTime > skipData.endTime)) {
+          // art.currentTime = 1
+          COMMON.ShowMsg("当前内容跳过")
+          art.currentTime = skipData.endTime;
+        }
+
+      }
+    }, 10)()
 
   })
   art.on('video:ended', () => {
@@ -549,7 +600,7 @@ const artF = async (data) => {
         {
           disable: !state,
           name: "title",
-          html: `<div class="art-title">第${playInfo.value.episode_number}集：${playInfo.value.title}</div>`,
+          html: `<div class="art-title">第${playInfo.value.episode_number}集${playInfo.value.title === undefined ? "" : ":" + playInfo.value.title}</div>`,
           style: {
             position: 'absolute',
             top: '10px',
@@ -607,6 +658,18 @@ const artF = async (data) => {
 
 }
 
+const dynamicInputCreateBySkipTime = () => {
+  return {
+    startTime: 0,
+    endTime: 0,
+  }
+}
+const dynamicInputCreateByUrl = () => {
+  return {
+    url: ""
+  }
+}
+
 async function getInstance(_art) {
   await artF(_art);
   art = _art;
@@ -617,6 +680,7 @@ async function getInstance(_art) {
 const onMountedFun = async () => {
   loading.value = true;
   await GetEmoji();
+  await getVideoConfig();
   if (gallery_type.value !== "Movie") {
     await GetEpisodeList();
   }
@@ -658,9 +722,167 @@ onMounted(async () => {
         <div class="player">
           <Artplayer class="art-player" @get-instance="getInstance" :option="setting" :style="ArtplayerStyle"/>
         </div>
+
+        <div class="showContainer">
+          <div class="data-header">
+            <div class="header-left">
+              <div class="season-title">
+                {{ playInfo.title }}
+              </div>
+            </div>
+            <div class="header-right">
+              <n-button @click="showSetUp = !showSetUp;art.pause()" strong secondary circle>
+                <i class='bx bx-cog'></i>
+              </n-button>
+              <n-button @click="showModal = !showModal;art.pause()" strong secondary circle>
+                <i class='bx bx-dots-vertical-rounded'></i>
+              </n-button>
+            </div>
+          </div>
+          <div class="data-content">
+            <div class="overview-text">
+              简介：
+              <p>{{ playInfo.overview }}</p>
+            </div>
+          </div>
+        </div>
+
       </n-grid-item>
     </n-grid>
   </div>
+
+  <n-modal v-model:show="showSetUp" title="跳过时间段整季可用，平台链接当前集可用" preset="dialog" draggable="true"
+           :style="{ width: '30em', maxHeight: '30em', overflowY: 'auto' }">
+    <n-form ref="formRef" :model="seasonConfig">
+      <n-form-item path="age" label="跳过开始时间/跳过结束时间">
+        <n-dynamic-input
+            v-model:value="seasonConfig.list"
+            placeholder="请输入跳过时间段"
+            :on-create="dynamicInputCreateBySkipTime"
+        >
+          <template #default="{ value }">
+            <div style="display: flex; align-items: center; width: 100%">
+              <n-input-number
+                  v-model:value="value.startTime"
+                  style="margin-right: 12px; width: 160px"
+                  placeholder="请输入跳过开始时间"
+              />
+              <n-input-number
+                  v-model:value="value.endTime"
+                  style="margin-right: 12px; width: 160px"
+                  placeholder="请输入跳过结束时间"
+              />
+            </div>
+          </template>
+        </n-dynamic-input>
+      </n-form-item>
+      <n-form-item label="平台链接">
+        <n-dynamic-input
+            v-model:value="seasonConfig.url"
+            placeholder="请输入平台链接"
+            :on-create="dynamicInputCreateByUrl"
+        >
+          <template #default="{ value }">
+            <div style="display: flex; align-items: center; width: 100%">
+              <n-input
+                  v-model:value="value.url"
+                  style="margin-right: 12px;"
+                  placeholder="请输入平台链接"
+              />
+            </div>
+          </template>
+        </n-dynamic-input>
+      </n-form-item>
+    </n-form>
+
+    <template #action>
+      <n-button @click="putVideoConfig">确认</n-button>
+      <n-button @click="showSetUp = false">取消</n-button>
+    </template>
+  </n-modal>
+  <n-modal transform-origin="center" v-model:show="showModal">
+    <n-card style="width: 600px" title="外部播放器/播放时请不要关闭本网页，不然播放链接会过期" :bordered="false"
+            size="huge" role="dialog" aria-modal="true">
+      <template #header-extra>
+        <n-button @click="showModal = !showModal" strong secondary circle>
+          <i class='bx bx-x'></i>
+        </n-button>
+      </template>
+      <ul class="play-list">
+        <li class="play-item">
+          <a :href="'iina://weblink/?url=' + playUrl" target="_blank">
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                <img class="play-icon" src="/images/iina.webp" alt="">
+              </template>
+              IINA
+            </n-tooltip>
+          </a>
+        </li>
+        <li class="play-item">
+          <a :href="'potplayer://' + playUrl" target="_blank">
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                <img class="play-icon" src="/images/potplayer.webp" alt="">
+              </template>
+              Potplayer
+            </n-tooltip>
+          </a>
+        </li>
+        <li class="play-item">
+          <a :href="'vlc://' + playUrl" target="_blank">
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                <img class="play-icon" src="/images/vlc.webp" alt="">
+              </template>
+              vcl
+            </n-tooltip>
+          </a>
+        </li>
+        <li class="play-item">
+          <a :href="'nplayer-' + playUrl" target="_blank">
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                <img class="play-icon" src="/images/nplayer.webp" alt="">
+              </template>
+              nplayer
+            </n-tooltip>
+          </a>
+        </li>
+        <li class="play-item">
+          <a :href="'infuse://x-callback-url/play?url=' + playUrl" target="_blank">
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                <img class="play-icon" src="/images/infuse.webp" alt="">
+              </template>
+              infuse
+            </n-tooltip>
+          </a>
+        </li>
+        <li class="play-item">
+          <a :href="'intent:' + playUrl" target="_blank">
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                <img class="play-icon" src="/images/mxplayer.webp" alt="">
+              </template>
+              Mxplayer
+            </n-tooltip>
+          </a>
+        </li>
+        <li class="play-item">
+          <a :href="'intent:' + playUrl" target="_blank">
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                <img class="play-icon" src="/images/mxplayer-pro.webp" alt="">
+              </template>
+              Mxplayer-Pro
+            </n-tooltip>
+          </a>
+        </li>
+      </ul>
+    </n-card>
+  </n-modal>
+
 </template>
 
 
