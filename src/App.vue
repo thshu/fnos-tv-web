@@ -186,7 +186,9 @@ onMounted(async () => {
 watch(
     () => route.fullPath,
     async (newPath, oldPath) => {
-      await onMountedFun();
+      if (newPath === "/") {
+        await onMountedFun();
+      }
     }
 );
 
