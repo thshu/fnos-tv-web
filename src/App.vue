@@ -286,7 +286,7 @@ watch(
                 </div>
               </n-layout-sider>
               <n-layout :native-scrollbar="false">
-                <router-view />
+                <router-view/>
               </n-layout>
             </n-layout>
           </n-layout>

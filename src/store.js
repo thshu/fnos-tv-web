@@ -10,3 +10,8 @@ export const useMediaDbData = defineStore('MediaDbData', () => {
     const sort_type = ref("DESC");
     return {list, info, sort_column, sort_type}
 })
+
+export const usePlayerData = defineStore("PlayerData", () => {
+    const episode_guid = ref(null);
+    return {episode_guid}
+})

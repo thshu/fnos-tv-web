@@ -7,12 +7,14 @@ import Artplayer from "./ArtPlayer.vue";
 import {onBeforeRouteLeave, onBeforeRouteUpdate} from "vue-router";
 import VueCookies from "vue-cookies";
 import axios from "axios";
+import {usePlayerData} from "@/store.js";
 // import artplayerPluginDanmuku from "artplayer-plugin-danmuku";
 
 const instance = getCurrentInstance();
 const proxy = instance.appContext.config.globalProperties;
 const COMMON = proxy.$COMMON;
 
+const PlayerData = usePlayerData()
 let art = null;
 const guid = ref(null);
 const episode_guid = ref(null);
@@ -35,7 +37,7 @@ const emojos = ref(null);
 const qualitySelector = ref([]);
 
 guid.value = proxy.$route.query.guid
-episode_guid.value = proxy.$route.query.episode_guid
+episode_guid.value = PlayerData.episode_guid
 gallery_type.value = proxy.$route.query.gallery_type
 
 var danmu_setting = window.localStorage.danmu_setting;
@@ -220,12 +222,13 @@ async function GetEpisodeList() {
 }
 
 // 获取播放信息
-async function GetPayInfo() {
+async function GetPayInfo(_guid) {
   let api = "/api/v1/play/info";
   let _data = {
-    "item_guid": episode_guid.value
+    "item_guid": _guid
   }
   let res = await COMMON.requests("POST", api, true, _data)
+  return res;
   playInfo.value = res.item;
 }
 
@@ -511,7 +514,12 @@ async function play() {
     clearInterval(timerSendPlayRecord.value)
   }
   let playLink = urlBase.value;
-  await GetPayInfo();
+  if(episode_guid.value === null){
+    let guidPlayInfo = await GetPayInfo(guid.value)
+    episode_guid.value = guidPlayInfo.item.guid
+  }
+  let _PayInfo = await GetPayInfo(episode_guid.value);
+  playInfo.value = _PayInfo.item;
   await GetStreamList();
   await GetQuality();
   await GetPalyUrl();

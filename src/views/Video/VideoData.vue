@@ -1,6 +1,7 @@
 <script setup>
 import {getCurrentInstance, onMounted, ref} from "vue";
 import {onBeforeRouteUpdate} from "vue-router";
+import {usePlayerData} from "@/store.js";
 
 const instance = getCurrentInstance();
 const proxy = instance.appContext.config.globalProperties;
@@ -8,6 +9,7 @@ const COMMON = proxy.$COMMON;
 
 const per_view = ref(5);
 
+const PlayerData = usePlayerData()
 const guid = ref(null);
 const gallery_type = ref(null);
 const VideoDataInfo = ref({})
@@ -69,14 +71,12 @@ async function GetEpisodeList() {
 }
 
 async function Play(_guid = play_guid.value) {
-  console.log("播放按钮")
-  console.log(guid)
+  PlayerData.episode_guid = _guid
   proxy.$router.push({
     path: "/player",
     query: {
       gallery_type: gallery_type.value,
-      guid: playInfo.value.parent_guid,
-      episode_guid: _guid
+      guid: playInfo.value.parent_guid
     }
   })
 }
