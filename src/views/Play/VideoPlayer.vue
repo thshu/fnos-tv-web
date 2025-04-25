@@ -1,12 +1,11 @@
 <script setup>
 import flvjs from 'flv.js';
 import Hls from 'hls.js';
-import {getCurrentInstance, onMounted, onBeforeUnmount, ref} from "vue";
+import {getCurrentInstance, onBeforeUnmount, onMounted, ref} from "vue";
 
 import Artplayer from "./ArtPlayer.vue";
 import {onBeforeRouteLeave, onBeforeRouteUpdate} from "vue-router";
 import VueCookies from "vue-cookies";
-import axios from "axios";
 import {usePlayerData} from "@/store.js";
 // import artplayerPluginDanmuku from "artplayer-plugin-danmuku";
 
@@ -229,7 +228,6 @@ async function GetPayInfo(_guid) {
   }
   let res = await COMMON.requests("POST", api, true, _data)
   return res;
-  playInfo.value = res.item;
 }
 
 async function GetStreamList() {
@@ -317,7 +315,7 @@ async function SendPlayRecord() {
       "playback_speed": art.playbackRate,
       "guid": guid.value,
     }
-    let res = await COMMON.requests("POST", api, true, data)
+    await COMMON.requests("POST", api, true, data)
   }
 }
 
@@ -359,7 +357,7 @@ async function putVideoConfig() {
   if (seasonConfig.value.list !== undefined) {
     for (let item of seasonConfig.value.list) {
       if (!(item.startTime === 0 && item.endTime === 0)) {
-        if (item.endTime === null){
+        if (item.endTime === null) {
           // 如果endtime为空，直接跳到最后
           item.endTime = art.duration
         }
@@ -514,7 +512,7 @@ async function play() {
     clearInterval(timerSendPlayRecord.value)
   }
   let playLink = urlBase.value;
-  if(episode_guid.value === null){
+  if (episode_guid.value === null) {
     let guidPlayInfo = await GetPayInfo(guid.value)
     episode_guid.value = guidPlayInfo.item.guid
   }

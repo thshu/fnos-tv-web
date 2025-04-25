@@ -51,8 +51,7 @@ onMounted(async () => {
                 <router-link :to="{
                     path: '/player', query: {
                         gallery_type: item.type === 'Movie'?'Movie':'TV',
-                        guid: item.parent_guid,
-                        episode_guid: item.guid
+                        guid: item.parent_guid
                     }
                 }">
                   <img v-if="item.poster.length > 0" loading="lazy" class='gallery-img'
