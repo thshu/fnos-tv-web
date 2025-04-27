@@ -397,6 +397,7 @@ async function putVideoConfig() {
     skipList.value = sendData.list
     seasonConfig.value = sendData
     art.plugins.artplayerPluginDanmuku.load();
+    void loadDanmuku()
   } catch {
   }
   showSetUp.value = false;
