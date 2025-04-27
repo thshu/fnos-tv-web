@@ -7,7 +7,8 @@ import Artplayer from "./ArtPlayer.vue";
 import {onBeforeRouteLeave, onBeforeRouteUpdate} from "vue-router";
 import VueCookies from "vue-cookies";
 import {usePlayerData} from "@/store.js";
-// import artplayerPluginDanmuku from "artplayer-plugin-danmuku";
+import sortedIndexBy from 'lodash-es/sortedIndexBy'
+import artplayerPluginDanmuku from "artplayer-plugin-danmuku";
 
 const instance = getCurrentInstance();
 const proxy = instance.appContext.config.globalProperties;
@@ -32,6 +33,25 @@ const seasonConfig = ref({})
 const showSetUp = ref(false)
 const timerSendPlayRecord = ref(null);
 const emojos = ref(null);
+const allDanmaku = ref({})
+const danmuTitleData = ref({
+  name: "danmuTitle",
+  html: "弹幕加载中...",
+  style: {
+    position: 'absolute',
+    top: '10px',
+    right: '10px',
+    color: '#fff',
+    fontSize: '16px',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: '4px 8px',
+    borderRadius: '4px',
+  }
+})
+const danmuConfig = ref({
+  loadedUntil: 0,
+  segmentDuration: 10
+})
 
 const qualitySelector = ref([]);
 
@@ -67,22 +87,6 @@ danmu_setting = JSON.parse(danmu_setting).value
 const setting = ref({
   url: "",
   id: "",
-  layers: [
-    {
-      name: "title",
-      html: '<div class="art-title"></div>',
-      style: {
-        position: 'absolute',
-        top: '10px',
-        left: '10px',
-        color: '#fff',
-        fontSize: '16px',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        padding: '4px 8px',
-        borderRadius: '4px',
-      }
-    },
-  ],
   customType: {
     m3u8: function (video, url) {
       var hls = new Hls()
@@ -175,7 +179,7 @@ const setting = ref({
     indicator: '<img width="16" heigth="16" src="./images/indicator.svg">',
   },
   plugins: [
-    // window.artplayerPluginDanmuku(danmu_setting)
+    artplayerPluginDanmuku(danmu_setting)
   ],
 })
 const ArtplayerStyle = {
@@ -199,7 +203,7 @@ const debounce = (fn, delay) => {
   }
 }
 
-const loadDanmuku = () => () => new Promise(resolve => {
+async function loadDanmuku() {
   let episode_number = playInfo.value.episode_number === undefined ? 1 : playInfo.value.episode_number;
   let season = playInfo.value.type !== "Movie";
   let title = season ? playInfo.value.tv_title : playInfo.value.title
@@ -207,8 +211,16 @@ const loadDanmuku = () => () => new Promise(resolve => {
   let danmuku = `/danmu/get?douban_id=${playInfo.value.douban_id}&episode_number=${episode_number}&title=${title}&season_number=${season_number}&season=${season}&guid=${episode_guid.value}`;
   fetch(danmuku)
       .then(res => res.json())
-      .then(json => resolve(episode_number in json ? json[episode_number] : []))
-})
+      .then(json => {
+        allDanmaku.value = json;
+        danmuTitleData.value.html = `弹幕加载完成，${json[episode_number].length ?? 0}条数据`
+        // art.plugins.artplayerPluginDanmuku.load(json[episode_number])
+        art.layers.update(danmuTitleData.value)
+      }).catch(err => {
+    danmuTitleData.value.html = `弹幕加载失败`
+    art.layers.update(danmuTitleData.value)
+  })
+}
 
 // 切换清晰度
 async function switchQuality(item, $dom, event) {
@@ -521,6 +533,7 @@ async function play() {
   await GetStreamList();
   await GetQuality();
   await GetPalyUrl();
+  await GetEmoji();
   if (art !== null) {
     await art.switchUrl(url.value);
   }
@@ -537,28 +550,30 @@ async function play_next() {
 
 
 async function ready() {
+  timerSendPlayRecord.value = setInterval(SendPlayRecord, 10000)
+  art.seek = playInfo.value.watched_ts
+
+  danmuConfig.value.loadedUntil = playInfo.value.watched_ts;
+  art.layers.update(danmuTitleData.value)
+  void loadDanmuku()
   await GetSkipList();
   await getVideoConfig();
-  if (!art.plugins.hasOwnProperty("artplayerPluginDanmuku")) {
-    // 加载自己修改的弹幕js
-    await import('../../../public/packages//artplayer-plugin-danmuku.js');
-    art.plugins.add(window.artplayerPluginDanmuku(danmu_setting));
-  }
+  // if (!art.plugins.hasOwnProperty("artplayerPluginDanmuku")) {
+  //   // 加载自己修改的弹幕js
+  //   await import('../../../public/packages//artplayer-plugin-danmuku.js');
+  //   art.plugins.add(window.artplayerPluginDanmuku(danmu_setting));
+  // }
   // art.plugins.artplayerPluginDanmuku.config(danmu_setting)
   if (timerSendPlayRecord.value !== null) {
     clearInterval(timerSendPlayRecord.value)
   }
-  timerSendPlayRecord.value = setInterval(SendPlayRecord, 10000)
-  art.seek = playInfo.value.watched_ts
   await UpdateControl(art);
   art.plugins.artplayerPluginDanmuku.reset();
-  art.plugins.artplayerPluginDanmuku.load(loadDanmuku());
-
 
   art.layers.update(
       {
         name: "title",
-        html: `<div class="art-title">第${playInfo.value.episode_number}集：${playInfo.value.title}</div>`,
+        html: `<div class="art-title">第${playInfo.value.episode_number}集${playInfo.value.title === undefined ? "" : ":" + playInfo.value.title}</div>`,
         style: {
           position: 'absolute',
           top: '10px',
@@ -603,6 +618,29 @@ const artF = async (data) => {
 
       }
     }, 10)()
+    let episode_number = playInfo.value.episode_number === undefined ? 1 : playInfo.value.episode_number;
+    if (episode_number in allDanmaku.value) {
+      let danmuList = allDanmaku.value[episode_number]
+      let current = art.currentTime;
+      // 当播放到下一个未加载区间时
+      if (current >= danmuConfig.value.loadedUntil) {
+        if (danmuConfig.value.loadedUntil === 0 || (current - danmuConfig.value.loadedUntil) > (danmuConfig.value.segmentDuration * 2)) {
+          danmuConfig.value.loadedUntil = current - 5;
+        }
+        const startTime = danmuConfig.value.loadedUntil;
+        const endTime = startTime + danmuConfig.value.segmentDuration;
+        const startIndex = sortedIndexBy(danmuList, {time: danmuConfig.value.loadedUntil}, o => o.time);
+        const segment = [];
+        for (let i = startIndex; i < danmuList.length && danmuList[i].time < endTime; i++) {
+          segment.push(danmuList[i]);
+        }
+
+        if (segment.length) {
+          art.plugins.artplayerPluginDanmuku.load(segment); // 追加弹幕
+        }
+        danmuConfig.value.loadedUntil = endTime;  // 更新下一次加载起点
+      }
+    }
 
   })
   art.on('video:ended', () => {
@@ -627,6 +665,8 @@ const artF = async (data) => {
           }
         }
     )
+    danmuTitleData.value.disable = !state
+    art.layers.update(danmuTitleData.value)
   });
 
   art.on('artplayerPluginDanmuku:config', (option) => {
@@ -693,7 +733,6 @@ async function getInstance(_art) {
 
 const onMountedFun = async () => {
   loading.value = true;
-  await GetEmoji();
   await getVideoConfig();
   if (gallery_type.value !== "Movie") {
     await GetEpisodeList();
