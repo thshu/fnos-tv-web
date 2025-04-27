@@ -551,6 +551,9 @@ async function play_next() {
 
 
 async function ready() {
+  if (timerSendPlayRecord.value !== null) {
+    clearInterval(timerSendPlayRecord.value)
+  }
   timerSendPlayRecord.value = setInterval(SendPlayRecord, 10000)
   art.seek = playInfo.value.watched_ts
 
@@ -565,9 +568,7 @@ async function ready() {
   //   art.plugins.add(window.artplayerPluginDanmuku(danmu_setting));
   // }
   // art.plugins.artplayerPluginDanmuku.config(danmu_setting)
-  if (timerSendPlayRecord.value !== null) {
-    clearInterval(timerSendPlayRecord.value)
-  }
+
   await UpdateControl(art);
   art.plugins.artplayerPluginDanmuku.reset();
 
