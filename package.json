@@ -8,12 +8,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "artplayer": "^5.2.2",
-    "artplayer-plugin-danmuku": "^5.1.5",
+    "artplayer": "^5.2.3",
+    "artplayer-plugin-danmuku": "^5.1.6",
     "axios": "^1.8.4",
     "boxicons": "^2.1.4",
     "flv.js": "^1.6.2",
-    "hls.js": "^1.6.0",
+    "hls.js": "^1.6.2",
     "js-md5": "^0.8.3",
     "lodash-es": "^4.17.21",
     "node-snackbar": "^0.1.16",
