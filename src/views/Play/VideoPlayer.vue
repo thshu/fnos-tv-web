@@ -204,6 +204,8 @@ const debounce = (fn, delay) => {
 }
 
 async function loadDanmuku() {
+  danmuTitleData.value.html = `弹幕加载中...`
+  art.layers.update(danmuTitleData.value)
   let episode_number = playInfo.value.episode_number === undefined ? 1 : playInfo.value.episode_number;
   let season = playInfo.value.type !== "Movie";
   let title = season ? playInfo.value.tv_title : playInfo.value.title
@@ -290,6 +292,9 @@ async function GetQuality() {
 }
 
 async function GetPalyUrl() {
+  if (art !== null && art !== undefined) {
+    art.loading.show = true;
+  }
   let api = "/api/v1/play/play"
   let _data = {
     "media_guid": StreamList.value.video_streams[0].media_guid,
@@ -554,11 +559,13 @@ async function ready() {
   if (timerSendPlayRecord.value !== null) {
     clearInterval(timerSendPlayRecord.value)
   }
+  art.loading.show = false;
   timerSendPlayRecord.value = setInterval(SendPlayRecord, 10000)
   art.seek = playInfo.value.watched_ts
 
   danmuConfig.value.loadedUntil = playInfo.value.watched_ts;
   art.layers.update(danmuTitleData.value)
+  allDanmaku.value = [];
   void loadDanmuku()
   await GetSkipList();
   await getVideoConfig();
@@ -699,7 +706,7 @@ const artF = async (data) => {
     matches.forEach(match => {
       const emojo = emojosMap.get(`[${match}]`);
       if (emojo !== undefined) {
-        text = text.replace(`[${match}]`, `<img src="${emojo}" style="width: ${danmu.fontSize}px;"/>`);
+        text = text.replace(`[${match}]`, `<img src="${emojo}" style="height: 1em; width: auto; vertical-align: middle;"/>`);
       }
     });
     $ref.innerHTML = text;
