@@ -517,7 +517,7 @@ async function UpdateControl(_art) {
     tooltip: VueCookies.get('skip') === null ? "打开" : (VueCookies.get('skip') ? "打开" : "关闭"),
     switch: VueCookies.get('skip') === null ? true : VueCookies.get('skip'),
     onSwitch: function (item, $dom, event) {
-      VueCookies.set('skip', !item.switch);
+      VueCookies.set('skip', !item.switch, -1);
       const nextState = !item.switch;
       item.tooltip = nextState ? '打开' : '关闭';
       return nextState;
@@ -617,7 +617,7 @@ const artF = async (data) => {
         if (currentTime > art.duration / 3) {
           return
         }
-        var is_skip = VueCookies.get('skip') === 'true';
+        var is_skip = VueCookies.get('skip') === 'true' || VueCookies.get('skip') === null;
 
         if ((skipData !== undefined) && (is_skip === null || is_skip) && !(art.currentTime < skipData.startTime || art.currentTime > skipData.endTime)) {
           // art.currentTime = 1
