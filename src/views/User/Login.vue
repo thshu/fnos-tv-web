@@ -35,7 +35,12 @@ async function NasLogin(code) {
   let res = await COMMON.requests("POST", api, false, data)
   VueCookies.set('authorization', res.token)
   COMMON.ShowMsg('登录成功！')
-  window.opener.location.href = '/' // 父窗口跳转
+  // 打开名为 home 的窗口（若存在，就返回它的引用）
+  const parentWin = window.open('', 'home');
+  if (parentWin) {
+    parentWin.location.href = '/';
+  }
+  // window.location.href = '/' // 父窗口跳转
   window.close() // 关闭当前窗口
 }
 
@@ -56,6 +61,7 @@ async function GetFnUrl(){
 
 async function OpenNasLogin() {
   let fnUrl = await GetFnUrl();
+  window.name = 'home';
   window.open(`${fnUrl}/signin?client_id=${ConfigData.value.nas_oauth.app_id}&redirect_uri=${window.location.href}`, '_blank', 'width=600,height=400')
 }
 
