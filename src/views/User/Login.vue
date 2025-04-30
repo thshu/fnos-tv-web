@@ -21,7 +21,7 @@ const route = useRoute()
 async function LoginUser() {
   let api = "/api/v1/login"
   let res = await COMMON.requests("POST", api, false, user.value)
-  VueCookies.set('authorization', res.token)
+  VueCookies.set('authorization', res.token, -1)
   COMMON.ShowMsg('登录成功！')
   await router.push('/');
 }
@@ -33,7 +33,7 @@ async function NasLogin(code) {
     "code": code
   }
   let res = await COMMON.requests("POST", api, false, data)
-  VueCookies.set('authorization', res.token)
+  VueCookies.set('authorization', res.token, -1)
   COMMON.ShowMsg('登录成功！')
   // 打开名为 home 的窗口（若存在，就返回它的引用）
   const parentWin = window.open('', 'home');
@@ -124,16 +124,6 @@ watch(() => route.query.code, (code) => {
 </template>
 
 <style scoped>
-.tool {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.md-title {
-  font-size: 25px;
-  margin-bottom: 10px;
-}
 
 .md-card.login-card {
   padding-top: 40px;
@@ -183,7 +173,7 @@ watch(() => route.query.code, (code) => {
   line-height: 44px;
 }
 
-.container .top .header .logo {
+.container .top .header {
   height: 44px;
   margin-right: 16px;
   vertical-align: top;
