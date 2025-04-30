@@ -264,7 +264,8 @@ watch(
                   <div class="navigation more">
                     <ul class="nav-links">
                       <li v-for="(item, index) in data" :key="index">
-                        <router-link :to="{
+                        <div v-if="item.category !== 'Others'">
+                          <router-link :to="{
                                                     path: '/list', query: {
                                                         gallery_uid: item.guid,
                                                         gallery_type: item.category
@@ -273,13 +274,16 @@ watch(
                                                     <span v-if="item.category === 'Movie'" class="icon">
                                                         <i class='bx bxs-movie'></i>
                                                     </span>
-                          <span v-else class="icon">
+                            <span v-else class="icon">
                                                         <i class='bx bx-desktop'></i>
                                                     </span>
-                          <span :data-id="item.gallery_uid" class="title">{{ item.title }}</span>
-                          <span class="title"
-                                style="position: absolute;right: 1em;font-size: 1em;">{{ MediaDbSum[item.guid] }}</span>
-                        </router-link>
+                            <span :data-id="item.gallery_uid" class="title">{{ item.title }}</span>
+                            <span class="title"
+                                  style="position: absolute;right: 1em;font-size: 1em;">{{
+                                MediaDbSum[item.guid]
+                              }}</span>
+                          </router-link>
+                        </div>
                       </li>
                     </ul>
                   </div>
