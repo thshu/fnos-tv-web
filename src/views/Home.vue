@@ -83,58 +83,60 @@ onMounted(async () => {
         </div>
       </div>
       <div class="card-shows" v-for="(key, index) in Object.keys(MediaDbData.info)" :key="index">
-        <div class="card-show-title">
-          {{ MediaDbData.list.find((item) => item.guid === key).title }}
-        </div>
-        <div class="card-show-content view-card">
-          <n-carousel :show-dots="false" show-arrow :slides-per-view="per_card" :space-between="20" :loop="false"
-                      draggable>
-            <div class="view-item" v-for="item in MediaDbData.info[key].list" :key="item.id">
-              <div class="view-item-header">
-                <div class="view-item-tag-list">
-                  <div class="view-item-tag rating">
-                    {{
-                      isNaN(Math.floor(item.vote_average * 100) /
-                          100) ? "" : Math.floor(item.vote_average * 100) / 100
-                    }}
-                  </div>
-                  <!-- <div v-if="item.Type != 'Movie' && item.ChildCount != 0" class="view-item-tag count">
-                      {{ item.ChildCount }}
-                  </div> -->
-                  <!--                  <p>{{ item }}</p>-->
-                  <div v-if="item.played" class="view-item-tag count">
-                    <i class='bx bx-check'></i>
+        <div v-if="MediaDbData.list.find((item) => item.guid === key).category !== 'Others'">
+          <div class="card-show-title">
+            {{ MediaDbData.list.find((item) => item.guid === key).title }}
+          </div>
+          <div class="card-show-content view-card">
+            <n-carousel :show-dots="false" show-arrow :slides-per-view="per_card" :space-between="20" :loop="false"
+                        draggable>
+              <div class="view-item" v-for="item in MediaDbData.info[key].list" :key="item.id">
+                <div class="view-item-header">
+                  <div class="view-item-tag-list">
+                    <div class="view-item-tag rating">
+                      {{
+                        isNaN(Math.floor(item.vote_average * 100) /
+                            100) ? "" : Math.floor(item.vote_average * 100) / 100
+                      }}
+                    </div>
+                    <!-- <div v-if="item.Type != 'Movie' && item.ChildCount != 0" class="view-item-tag count">
+                        {{ item.ChildCount }}
+                    </div> -->
+                    <!--                  <p>{{ item }}</p>-->
+                    <div v-if="item.played" class="view-item-tag count">
+                      <i class='bx bx-check'></i>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <router-link :to="{
+                <router-link :to="{
                                 path: '/video', query: {
                                     guid: item.guid,
                                     gallery_type: item.type
                                 }
                             }">
-                <img v-if="item.poster !== undefined" loading="lazy" class="carousel-img"
-                     :src='COMMON.imgUrl +  "/92/17/"+item.poster + "?w=200"'>
-                <img v-else loading="lazy" class='carousel-img' src='/images/not_video.jpg'>
-              </router-link>
-              <div v-if="item.title != null" class="view-item-title">
-                {{ item.title }}
+                  <img v-if="item.poster !== undefined" loading="lazy" class="carousel-img"
+                       :src='COMMON.imgUrl +  "/92/17/"+item.poster + "?w=200"'>
+                  <img v-else loading="lazy" class='carousel-img' src='/images/not_video.jpg'>
+                </router-link>
+                <div v-if="item.title != null" class="view-item-title">
+                  {{ item.title }}
+                </div>
+                <div v-else class="view-item-title">
+                  {{ item.name }}
+                </div>
               </div>
-              <div v-else class="view-item-title">
-                {{ item.name }}
-              </div>
-            </div>
-            <template #arrow="{ prev, next }">
-              <div class="custom-arrow">
-                <button type="button" class="custom-arrow--left" @click="prev">
-                  <i class='bx bx-chevron-left'></i>
-                </button>
-                <button type="button" class="custom-arrow--right" @click="next">
-                  <i class='bx bx-chevron-right'></i>
-                </button>
-              </div>
-            </template>
-          </n-carousel>
+              <template #arrow="{ prev, next }">
+                <div class="custom-arrow">
+                  <button type="button" class="custom-arrow--left" @click="prev">
+                    <i class='bx bx-chevron-left'></i>
+                  </button>
+                  <button type="button" class="custom-arrow--right" @click="next">
+                    <i class='bx bx-chevron-right'></i>
+                  </button>
+                </div>
+              </template>
+            </n-carousel>
+          </div>
         </div>
       </div>
     </div>
