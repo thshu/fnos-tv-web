@@ -72,10 +72,14 @@ async function GetEpisodeList() {
 
 async function Play(_guid = play_guid.value) {
   PlayerData.episode_guid = _guid
+  let _gallery_type = gallery_type.value;
+  if(_gallery_type === "season"){
+    _gallery_type = "TV"
+  }
   proxy.$router.push({
     path: "/player",
     query: {
-      gallery_type: gallery_type.value,
+      gallery_type: _gallery_type,
       guid: playInfo.value.parent_guid
     }
   })
