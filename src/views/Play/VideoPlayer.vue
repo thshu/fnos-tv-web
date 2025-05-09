@@ -296,6 +296,7 @@ async function GetPalyUrl() {
     art.loading.show = true;
   }
   let api = "/api/v1/play/play"
+  let _channels = (StreamList.value.audio_streams.length === 1 ? StreamList.value.audio_streams[0] : StreamList.value.audio_streams.find(o => o.codec_name === "aac")).channels;
   let _data = {
     "media_guid": StreamList.value.video_streams[0].media_guid,
     "video_guid": StreamList.value.video_streams[0].guid,
@@ -306,7 +307,7 @@ async function GetPalyUrl() {
     "audio_encoder": "aac",
     "audio_guid": StreamList.value.audio_streams[0].guid,
     "subtitle_guid": "",
-    "channels": (StreamList.value.audio_streams.length === 1 ? StreamList.value.audio_streams[0] : StreamList.value.audio_streams.find(o => o.codec_name === "aac")).channels
+    "channels": _channels < 2 ? 2 : _channels
   };
   let res = await COMMON.requests("POST", api, true, _data)
   urlBase.value = res.play_link;
