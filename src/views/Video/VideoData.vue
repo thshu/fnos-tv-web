@@ -639,4 +639,166 @@ span.button-text {
   background: rgba(0, 0, 0, 0.8);
 }
 
+/* 移动端适配样式 */
+@media (max-width: 768px) {
+  .view-scroller {
+    flex-direction: column;
+    padding: 10px;
+    gap: 15px;
+  }
+
+  .view-card-image {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .view-card-detail {
+    width: 100%;
+  }
+
+  .overview-text {
+    width: 100%;
+    min-width: unset;
+    font-size: 14px;
+  }
+
+  .detailButton {
+    width: 100%;
+    justify-content: center;
+    padding: 0.5em 1ch;
+  }
+
+  .button-icon {
+    font-size: 20px;
+  }
+
+  .button-text {
+    font-size: 16px;
+  }
+
+  .showContainer {
+    padding: 10px;
+  }
+
+  .show-card-list {
+    gap: 10px;
+  }
+
+  .show-img img {
+    width: 120px;
+  }
+
+  .show-name {
+    width: 120px;
+    font-size: 12px;
+  }
+
+  .carousel-container {
+    padding: 0 10px;
+  }
+
+  .carousel-arrow {
+    padding: 8px 12px;
+    font-size: 18px;
+  }
+
+  .view-item-title {
+    font-size: 12px;
+    margin-top: 5px;
+  }
+
+  .play-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+  }
+
+  .itemName-primary {
+    font-size: 20px;
+    line-height: 1.3;
+  }
+
+  .mediaInfo {
+    gap: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 12px;
+  }
+
+  .detailButtons {
+    margin-top: 8px;
+  }
+}
+
+/* 平板适配 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .view-card-image {
+    width: 25%;
+  }
+
+  .overview-text {
+    width: 70%;
+    min-width: unset;
+  }
+
+  .show-img img {
+    width: 140px;
+  }
+
+  .show-name {
+    width: 140px;
+  }
+}
+
+/* 确保轮播图在移动端正确显示 */
+@media (max-width: 768px) {
+  :deep(.n-carousel) {
+    --n-slides-per-view: 2;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  :deep(.n-carousel) {
+    --n-slides-per-view: 3;
+  }
+}
+
+/* 优化背景图片在移动端的显示 */
+@media (max-width: 768px) {
+  .backdropContainer {
+    background-position: center;
+    background-size: cover;
+  }
+
+  .view-backdrop {
+    background-image: linear-gradient(180deg, #200b0b 0, rgba(32, 11, 11, .84));
+  }
+}
+
+/* 优化标题在移动端的显示 */
+@media (max-width: 768px) {
+  .itemPrimaryNameContainer {
+    margin-bottom: 5px;
+  }
+
+  .itemName-primary {
+    word-break: break-word;
+  }
+}
+
+/* 优化按钮在移动端的触摸体验 */
+@media (max-width: 768px) {
+  .detailButton {
+    min-height: 44px; /* 确保触摸目标足够大 */
+  }
+
+  .carousel-arrow {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
 </style>
