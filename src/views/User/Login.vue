@@ -1,8 +1,16 @@
 <script setup>
 import VueCookies from 'vue-cookies';
-import {ref, getCurrentInstance, onMounted, watch} from "vue";
+import {getCurrentInstance, onMounted, ref, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import axios from "axios";
+import QrcodeVue from 'qrcode.vue'
+
+
+// 将组件注册到本地
+defineOptions({
+  components: {QrcodeVue}
+})
+
 // 获取 Vue 实例
 const instance = getCurrentInstance();
 const COMMON = instance.appContext.config.globalProperties.$COMMON;
@@ -16,6 +24,8 @@ const user = ref({
 })
 let title = COMMON.title
 const route = useRoute()
+const qrData = ref(null)
+const isQr = ref(false)
 
 
 async function LoginUser() {
@@ -44,6 +54,17 @@ async function NasLogin(code) {
   window.close() // 关闭当前窗口
 }
 
+async function getQr() {
+  let api = "/api/v1/logincode/generate"
+  let res = await COMMON.requests("PUT", api, false)
+  let _code = res.code;
+  if (_code === undefined || _code === null) {
+    COMMON.ShowMsg('获取登录二维码失败！')
+    return;
+  }
+  qrData.value = `fn://com.trim.tv/trim.media-center?platform=AndroidTV&osver=35&clientName=飞牛影视TV&code=${_code}&event=scanLogin&deviceName=${ConfigData.value.server_name}`;  // 直接使用原始字符串，不进行 base64 编码
+}
+
 async function getConfig() {
   let api = '/api/v1/sys/config'
   ConfigData.value = await COMMON.requests("GET", api);
@@ -52,7 +73,7 @@ async function getConfig() {
   }
 }
 
-async function GetFnUrl(){
+async function GetFnUrl() {
   const instance = axios.create()
   let api = "/api/getFnUrl"
   let res = await instance.get(api)
@@ -87,35 +108,52 @@ watch(() => route.query.code, (code) => {
       </div>
       <div class="main">
         <div class="md-card login-card">
-          <div class="md-card-flex">
-            <div class="md-card-header-text">
-              <!--<div class="md-title add-title">登录</div>-->
-            </div>
+          <div class="card-header">
+            <h2 class="card-title">{{ isQr ? '扫码登录' : '账号登录' }}</h2>
           </div>
-          <div class="create-post-from">
+          <div class="create-post-from" v-if="!isQr">
             <div class="form-control">
               <div class="icon">
-                <i class='bx bx-envelope'></i>
+                <i class='bx bx-user'></i>
               </div>
-              <input v-model="user.username" type="text" name="账号" placeholder="账号" required="">
+              <input v-model="user.username" type="text" name="账号" placeholder="请输入账号" required="">
             </div>
             <div class="form-control">
               <div class="icon">
-                <i class='bx bx-key'></i>
+                <i class='bx bx-lock-alt'></i>
               </div>
-              <input v-model="user.password" type="password" name="密码" placeholder="密码" required=""
+              <input v-model="user.password" type="password" name="密码" placeholder="请输入密码" required=""
                      autocomplete="off">
             </div>
             <div class="form-control">
               <button class="btn login-btn" @click="LoginUser">登录</button>
             </div>
-            <div class="form-control">
-              <button class="btn login-btn" @click="OpenNasLogin" style="background: #1A1E23">NAS登录</button>
+          </div>
+          <div class="qr-section" v-if="isQr">
+            <div class="qr-generator" v-if="qrData">
+              <qrcode-vue
+                  :value="qrData"
+                  :size="280"
+                  :level="'M'"
+                  :render-as="'canvas'"
+                  :margin="1"
+                  class="qr-code"
+              />
+              <div class="qr-tip">请使用飞牛影视扫描二维码登录</div>
             </div>
-            <!-- <div class="tool">
-                <h4></h4>
-                <h4 @click="RegistUser()">注册账号</h4>
-            </div> -->
+            <div v-if="!qrData" class="qr-wrapper loading">
+              <span class="loading-text">二维码加载中...</span>
+            </div>
+          </div>
+          <div class="login-options">
+            <button class="btn option-btn" @click="OpenNasLogin">
+              <i class='bx bx-server'></i>
+              NAS登录
+            </button>
+            <button class="btn option-btn" @click="isQr = !isQr;isQr?getQr():null;">
+              <i class='bx' :class="isQr ? 'bx-user' : 'bx-qr-scan'"></i>
+              {{ isQr ? '账号登录' : '扫码登录' }}
+            </button>
           </div>
         </div>
       </div>
@@ -124,147 +162,241 @@ watch(() => route.query.code, (code) => {
 </template>
 
 <style scoped>
-
-.md-card.login-card {
-  padding-top: 40px;
+.login-page {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(https://wework.qpic.cn/wwpic/893131_WTVcr3SmScqHmY2_1675911425/0);
+  background-size: cover;
+  background-position: center;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
-.btn {
-  display: inline-block;
-  color: #fff;
-  text-decoration: none;
-  font-family: inherit;
-  width: 100px;
-  background: red;
-  border: none;
-  padding: 10px 10px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 15px;
+.container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.top {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.header .title {
+  color: white;
+  font-size: 32px;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  margin: 0;
+}
+
+.desc {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.md-card.login-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  width: 360px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header {
+  text-align: center;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.card-title {
+  color: #333;
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.create-post-from {
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.form-control {
+  margin-bottom: 16px;
+  position: relative;
+  width: 100%;
+}
+
+.form-control .icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  z-index: 1;
+}
+
+.form-control input {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.3s;
+  background: white;
+  box-sizing: border-box;
 }
 
 .login-btn {
   width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  display: block;
 }
 
-
-.login-page {
-  background-image: url(https://wework.qpic.cn/wwpic/893131_WTVcr3SmScqHmY2_1675911425/0);
-  height: 100vh;
-}
-
-.container {
-  position: relative;
+.qr-section {
   width: 100%;
-  min-height: 100%;
-  padding: 110px 0 144px;
-  background-repeat: no-repeat;
-  background-position: center 110px;
-  background-size: 100%;
-  background-position-y: center;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
 }
 
-.container .top {
-  text-align: center;
+.qr-generator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
 }
 
-.container .top .header {
-  height: 44px;
-  line-height: 44px;
+.qr-code {
+  width: 240px !important;
+  height: 240px !important;
+  background: white;
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
 }
 
-.container .top .header {
-  height: 44px;
-  margin-right: 16px;
-  vertical-align: top;
-  border-style: none;
+.qr-code canvas {
+  width: 240px !important;
+  height: 240px !important;
 }
 
-.container .top .header .title {
-  position: relative;
-  top: 2px;
-  color: white;
-  font-weight: 600;
-  font-size: 33px;
-  font-family: Avenir, Helvetica Neue, Arial, Helvetica, sans-serif;
+.qr-wrapper.loading {
+  width: 240px;
+  height: 240px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: white;
+  border-radius: 12px;
+  flex-shrink: 0;
 }
 
-.container .top .desc {
-  margin-top: 12px;
-  margin-bottom: 40px;
-  color: white;
+.loading-text {
+  color: #666;
+  font-size: 16px;
+}
+
+.qr-tip {
+  color: #666;
   font-size: 14px;
+  text-align: center;
+  margin-top: 8px;
+  flex-shrink: 0;
 }
 
-.md-card {
-  border: 1px solid #0c0b0b;
-  position: relative;
-  z-index: 1;
-  border-radius: 5px;
-  transition: .3s cubic-bezier(.4, 0, .2, 1);
-  transition-property: color, background-color;
-  will-change: color, background-color;
-  padding: 20px;
-  background-color: #121111;
-  color: white;
+.login-options {
+  width: 100%;
+  margin-top: 20px;
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-.form-control {
+.btn {
+  padding: 10px 20px;
+  font-size: 15px;
+  height: 40px;
   display: flex;
   align-items: center;
-  margin-bottom: 30px;
+  justify-content: center;
 }
 
-.form-control .icon {
-  margin-right: 5px;
-}
-
-.icon i {
-  font-size: 26px;
-  color: red;
-}
-
-input,
-input:focus {
-  border: 0;
-  border-bottom: 1px solid #b4becb;
+.login-btn {
   width: 100%;
-  padding: 3px;
-  font-size: 16px;
-  outline: none;
+  background: #1890ff;
+  color: white;
+  font-weight: 500;
 }
 
-
-@media (min-width: 1200px) {
-
-  .container .main {
-    width: 25%;
-    margin: 0 auto;
-  }
+.login-btn:hover {
+  background: #40a9ff;
 }
 
-
-@media (min-width: 980px) {
-  .container .main {
-    width: 25%;
-    margin: 0 auto;
-  }
+.option-btn {
+  flex: 1;
+  min-width: 0;
 }
 
-
-@media (min-width: 768px) and (max-width: 979px) {
-  .container .main {
-    width: 50%;
-    margin: 0 auto;
-  }
+.option-btn:hover {
+  background: #e8e8e8;
 }
 
+.option-btn i {
+  font-size: 20px;
+}
 
-@media (max-width: 767px) {
-  .container .main {
-    width: 90%;
-    margin: 0 auto;
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
   }
-
+  
+  .md-card.login-card {
+    width: 320px;
+    padding: 20px;
+  }
+  
+  .create-post-from,
+  .qr-section,
+  .login-options {
+    max-width: 100%;
+  }
+  
+  .qr-code {
+    width: 200px !important;
+    height: 200px !important;
+  }
+  
+  .qr-code canvas {
+    width: 200px !important;
+    height: 200px !important;
+  }
+  
+  .qr-wrapper.loading {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .header .title {
+    font-size: 28px;
+  }
 }
 </style>
