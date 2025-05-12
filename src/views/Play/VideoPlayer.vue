@@ -54,6 +54,7 @@ const danmuConfig = ref({
 })
 
 const qualitySelector = ref([]);
+const currentQuality = ref(null);
 
 guid.value = proxy.$route.query.guid
 episode_guid.value = PlayerData.episode_guid
@@ -224,9 +225,107 @@ async function loadDanmuku() {
   })
 }
 
+// 获取清晰度
+async function GetQuality() {
+  let api = "/api/v1/play/quality"
+  let _data = {
+    "media_guid": StreamList.value.video_streams[0].media_guid
+  }
+  let res = await COMMON.requests("POST", api, true, _data);
+  QualityData.value = res;
+
+  // 按分辨率分组，每个分辨率下按码率排序
+  const qualityGroups = {};
+  res.forEach(item => {
+    if (!qualityGroups[item.resolution]) {
+      qualityGroups[item.resolution] = [];
+    }
+    qualityGroups[item.resolution].push({
+      bitrate: item.bitrate,
+      progressive: item.progressive
+    });
+  });
+
+  // 对每个分辨率组内的码率进行排序
+  Object.keys(qualityGroups).forEach(resolution => {
+    qualityGroups[resolution].sort((a, b) => b.bitrate - a.bitrate);
+  });
+
+  // 构建画质选择器数据
+  const selector = [];
+  const resolutions = Object.keys(qualityGroups).sort((a, b) => {
+    const resolutionOrder = {'4k': 4, '1080': 3, '720': 2, '480': 1, '360': 0};
+    return resolutionOrder[b] - resolutionOrder[a];
+  });
+
+  resolutions.forEach(resolution => {
+    const qualities = qualityGroups[resolution];
+    const baseItem = {
+      html: resolution,
+      selector: qualities.map(quality => ({
+        html: `${resolution} (${(quality.bitrate / 1000000).toFixed(1)}Mbps)`,
+        bitrate: quality.bitrate,
+        resolution: resolution,
+        progressive: quality.progressive
+      }))
+    };
+    selector.push(baseItem);
+  });
+
+  qualitySelector.value = selector;
+
+  // 设置默认画质为最高质量
+  if (selector.length > 0 && selector[0].selector.length > 0) {
+    currentQuality.value = selector[0].selector[0];
+  }
+}
+
 // 切换清晰度
 async function switchQuality(item, $dom, event) {
+  // 处理选择器返回的数据结构
+  const qualityData = item.selector ? item.selector[0] : item;
+  if (!qualityData || !qualityData.bitrate || !qualityData.resolution) {
+    console.error('Invalid quality item:', qualityData);
+    return;
+  }
 
+  try {
+    await mediaP("media.checkPlayLink", urlBase.value)
+    let api = "/api/v1/media/p";
+    let _data = {
+      "req": "media.resetQuality",
+      "reqid": "1234567890ABCDEF2s",
+      "playLink": urlBase.value,
+      "quality": {
+        "resolution": qualityData.resolution,
+        "bitrate": qualityData.bitrate
+      },
+      "startTimestamp": Math.floor(art.currentTime),
+      "clearCache": true
+    };
+
+    art.loading.show = true;
+    let res = await COMMON.requests("POST", api, true, _data);
+    
+    if (res.updateM3u8) {
+      // 更新当前画质状态
+      currentQuality.value = {
+        resolution: qualityData.resolution,
+        bitrate: qualityData.bitrate,
+        html: `${qualityData.resolution} (${(qualityData.bitrate / 1000000).toFixed(1)}Mbps)`
+      };
+      
+      // 更新播放器URL
+      await art.switchQuality(url.value);
+      COMMON.ShowMsg(`已切换到${qualityData.resolution} (${(qualityData.bitrate / 1000000).toFixed(1)}Mbps)`);
+
+    }
+  } catch (error) {
+    console.error('Failed to switch quality:', error);
+    COMMON.ShowMsg('画质切换失败，请重试');
+  } finally {
+    art.loading.show = false;
+  }
 }
 
 async function GetEpisodeList() {
@@ -247,48 +346,6 @@ async function GetPayInfo(_guid) {
 async function GetStreamList() {
   let api = "/api/v1/stream/list/" + episode_guid.value;
   StreamList.value = await COMMON.requests("GET", api, true)
-}
-
-// 获取清晰度
-async function GetQuality() {
-  let api = "/api/v1/play/quality"
-  let _data = {
-    "media_guid": StreamList.value.video_streams[0].media_guid
-  }
-  let res = await COMMON.requests("POST", api, true, _data);
-  QualityData.value = res;
-  let oneList = []
-  let twoDict = {}
-  let selector = []
-  for (let i = 0; i < res.length; i++) {
-    if (oneList.includes(res[i].resolution)) {
-      if (!twoDict[res[i].resolution].includes(res[i].bitrate)) {
-        twoDict[res[i].resolution].push(res[i].bitrate)
-      }
-    } else {
-      oneList.push(res[i].resolution)
-      twoDict[res[i].resolution] = [res[i].bitrate]
-    }
-  }
-
-  for (const item of oneList) {
-    let Bases = {
-      html: item,
-      selector: [],
-
-    }
-    for (const _item of twoDict[item]) {
-      Bases.selector.push(
-          {
-            html: _item,
-          }
-      )
-    }
-    selector.push(Bases)
-  }
-  qualitySelector.value = selector
-
-
 }
 
 async function GetPalyUrl() {
@@ -430,6 +487,28 @@ async function addArtConfig(_art, key, v) {
 
 async function UpdateControl(_art) {
   let forData = []
+  
+  // 添加画质选择器
+  if (qualitySelector.value.length > 0) {
+    const qualityControl = {
+      name: '画质',
+      position: 'right',
+      html: currentQuality.value ? 
+        `${currentQuality.value.resolution} (${(currentQuality.value.bitrate / 1000000).toFixed(1)}Mbps)` : 
+        '画质',
+      selector: qualitySelector.value.map(group => ({
+        html: group.html,
+        selector: group.selector.map(item => ({
+          html: item.html,
+          bitrate: item.bitrate,
+          resolution: item.resolution,
+          progressive: item.progressive
+        }))
+      })),
+      onSelect: switchQuality
+    };
+    forData.push(qualityControl);
+  }
 
   let 倍速 = {
     name: '倍速',
@@ -603,7 +682,6 @@ const artF = async (data) => {
   art = data;
   art.on('restart', () => {
     ready();
-    url.value = encodeURI(art.url);
   });
   art.on('ready', ready);
   art.on('video:ratechange', () => {
