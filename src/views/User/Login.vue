@@ -229,21 +229,24 @@ watch(() => route.query.code, (code) => {
   background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(https://wework.qpic.cn/wwpic/893131_WTVcr3SmScqHmY2_1675911425/0);
   background-size: cover;
   background-position: center;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh; /* 适配移动端动态视口高度 */
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); /* 适配刘海屏 */
 }
 
 .container {
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 16px;
   box-sizing: border-box;
 }
 
@@ -271,8 +274,9 @@ watch(() => route.query.code, (code) => {
   backdrop-filter: blur(10px);
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  padding: 24px;
-  width: 360px;
+  padding: 20px;
+  width: 100%;
+  max-width: 360px;
   margin: 0 auto;
   box-sizing: border-box;
   display: flex;
@@ -314,13 +318,14 @@ watch(() => route.query.code, (code) => {
 
 .form-control input {
   width: 100%;
-  padding: 12px 12px 12px 40px;
+  padding: 14px 12px 14px 40px; /* 增加输入框高度，提升触摸体验 */
   border: 1px solid #ddd;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 16px; /* 确保字体大小不小于16px，避免iOS自动缩放 */
   transition: all 0.3s;
   background: white;
   box-sizing: border-box;
+  -webkit-appearance: none; /* 移除iOS默认样式 */
 }
 
 .login-btn {
@@ -395,12 +400,14 @@ watch(() => route.query.code, (code) => {
 }
 
 .btn {
-  padding: 10px 20px;
-  font-size: 15px;
-  height: 40px;
+  padding: 12px 20px; /* 增加按钮高度 */
+  font-size: 16px;
+  height: 48px; /* 增加按钮高度，提升触摸体验 */
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 8px;
+  -webkit-tap-highlight-color: transparent; /* 移除移动端点击高亮 */
 }
 
 .login-btn {
@@ -429,23 +436,28 @@ watch(() => route.query.code, (code) => {
 
 @media (max-width: 768px) {
   .container {
-    padding: 16px;
+    padding: 12px;
   }
   
   .md-card.login-card {
-    width: 320px;
-    padding: 20px;
+    width: 100%;
+    max-width: 320px;
+    padding: 16px;
+    margin: 0 12px;
   }
   
-  .create-post-from,
-  .qr-section,
-  .login-options {
-    max-width: 100%;
+  .header .title {
+    font-size: 24px;
+  }
+  
+  .card-title {
+    font-size: 20px;
   }
   
   .qr-code {
     width: 200px !important;
     height: 200px !important;
+    padding: 8px;
   }
   
   .qr-code canvas {
@@ -458,8 +470,57 @@ watch(() => route.query.code, (code) => {
     height: 200px;
   }
   
+  .login-options {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .option-btn {
+    width: 100%;
+  }
+  
+  .form-control {
+    margin-bottom: 12px;
+  }
+  
+  .form-control input {
+    font-size: 16px;
+    padding: 12px 12px 12px 40px;
+  }
+  
+  .btn {
+    height: 44px;
+    font-size: 15px;
+  }
+}
+
+/* 针对超小屏幕的优化 */
+@media (max-width: 360px) {
+  .md-card.login-card {
+    padding: 12px;
+  }
+  
   .header .title {
-    font-size: 28px;
+    font-size: 22px;
+  }
+  
+  .card-title {
+    font-size: 18px;
+  }
+  
+  .qr-code {
+    width: 180px !important;
+    height: 180px !important;
+  }
+  
+  .qr-code canvas {
+    width: 180px !important;
+    height: 180px !important;
+  }
+  
+  .qr-wrapper.loading {
+    width: 180px;
+    height: 180px;
   }
 }
 </style>
