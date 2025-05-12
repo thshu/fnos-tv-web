@@ -296,7 +296,7 @@ async function GetPalyUrl() {
     art.loading.show = true;
   }
   let api = "/api/v1/play/play"
-  let _channels = (StreamList.value.audio_streams.length === 1 ? StreamList.value.audio_streams[0] : StreamList.value.audio_streams.find(o => o.codec_name === "aac")).channels;
+  let _channels = (StreamList.value.audio_streams.length !== 1 && StreamList.value.audio_streams.find(o => o.codec_name === "aac") !== undefined ? StreamList.value.audio_streams.find(o => o.codec_name === "aac") : StreamList.value.audio_streams[0]).channels;
   let _data = {
     "media_guid": StreamList.value.video_streams[0].media_guid,
     "video_guid": StreamList.value.video_streams[0].guid,

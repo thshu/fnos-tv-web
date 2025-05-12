@@ -79,8 +79,8 @@ async function Play(_guid = play_guid.value) {
   proxy.$router.push({
     path: "/player",
     query: {
-      gallery_type: _gallery_type,
-      guid: playInfo.value.parent_guid
+      gallery_type: playInfo.value.type,
+      guid: _guid
     }
   })
 }
