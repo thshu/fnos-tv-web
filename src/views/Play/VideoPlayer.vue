@@ -56,6 +56,8 @@ const danmuConfig = ref({
 const qualitySelector = ref([]);
 const currentQuality = ref(null);
 
+const IsFullscreen = ()=>{art.fullscreen}
+
 guid.value = proxy.$route.query.guid
 episode_guid.value = PlayerData.episode_guid
 gallery_type.value = proxy.$route.query.gallery_type
@@ -487,6 +489,7 @@ async function UpdateControl(_art) {
   // 添加画质选择器
   if (qualitySelector.value.length > 0) {
     const qualityControl = {
+      disable: (!art.fullscreen && COMMON.isMo),
       name: '画质',
       position: 'right',
       html: currentQuality.value ?
@@ -507,6 +510,7 @@ async function UpdateControl(_art) {
   }
 
   let 倍速 = {
+    disable: (!art.fullscreen && COMMON.isMo),
     name: '倍速',
     position: 'right',
     html: '倍速',
@@ -547,7 +551,7 @@ async function UpdateControl(_art) {
       name: '下一集',
       position: 'left',
       index: 11,
-      html: '<img width="22" heigth="22" v-lazy="./images/next.svg">',
+      html: '<img width="22" heigth="22" src="./images/next.svg">',
       tooltip: '下一集',
       style: {
         color: 'green',
@@ -570,6 +574,7 @@ async function UpdateControl(_art) {
     }
 
     let 选集 = {
+      disable: (!art.fullscreen && COMMON.isMo),
       name: '选集',
       position: 'right',
       html: "选集",
@@ -728,6 +733,9 @@ const artF = async (data) => {
   })
   art.on('video:ended', () => {
     play_next()
+  });
+  art.on('fullscreen', async (state) => {
+    await UpdateControl(art);
   });
 
   art.on('control', (state) => {
