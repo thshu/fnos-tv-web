@@ -3,14 +3,20 @@ import {useMediaDbData} from '../store'
 import {getCurrentInstance, onMounted, ref} from "vue";
 
 const MediaDbData = useMediaDbData()
-const per_view = ref(5);
-const per_card = ref(8);
+const per_view = ref(window.innerWidth <= 768 ? 2 : 5);
+const per_card = ref(window.innerWidth <= 768 ? 3 : 8);
 const instance = getCurrentInstance();
 const proxy = instance.appContext.config.globalProperties;
 const COMMON = proxy.$COMMON;
 const playList = ref(null)
 const play_item_guid = ref(null);
 const EpisodeCarouselRef = ref(null);
+
+// 监听窗口大小变化
+window.addEventListener('resize', () => {
+  per_view.value = window.innerWidth <= 768 ? 2 : 5;
+  per_card.value = window.innerWidth <= 768 ? 3 : 8;
+});
 
 async function GetPlayList() {
   let api = "/api/v1/play/list"
@@ -386,5 +392,96 @@ img.carousel-img {
 /* 悬浮时背景变亮 */
 .play-icon:hover {
   background: rgba(0, 0, 0, 0.8);
+}
+
+/* 移动端适配样式 */
+@media (max-width: 768px) {
+  .card-show-title {
+    font-size: 1.1em;
+    padding-bottom: 12px;
+  }
+
+  .view-item-title {
+    font-size: 0.9em;
+    margin-top: 4px;
+  }
+
+  .carousel-container {
+    margin: 0 -10px;
+  }
+
+  .carousel-arrow {
+    padding: 8px 12px;
+    font-size: 20px;
+  }
+
+  .play-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+  }
+
+  .view-item-tag {
+    font-size: 0.8em;
+    padding: 2px 6px;
+  }
+
+  .view-item-tag-list .count {
+    width: 16px;
+    height: 16px;
+    padding: 2px;
+  }
+
+  .custom-arrow button {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+  }
+
+  /* 调整图片容器间距 */
+  .card-shows {
+    margin-bottom: 16px;
+    padding: 0 10px;
+  }
+
+  /* 优化卡片间距 */
+  .n-carousel {
+    margin: 0 -5px;
+  }
+
+  .view-item {
+    padding: 0 5px;
+  }
+
+  /* 调整图片比例 */
+  img.carousel-img {
+    aspect-ratio: 2/3;
+  }
+
+  .gallery-img {
+    aspect-ratio: 16/9;
+  }
+}
+
+/* 小屏幕手机适配 */
+@media (max-width: 480px) {
+  .card-show-title {
+    font-size: 1em;
+  }
+
+  .view-item-title {
+    font-size: 0.8em;
+  }
+
+  .carousel-arrow {
+    padding: 6px 10px;
+    font-size: 18px;
+  }
+
+  .play-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+  }
 }
 </style>

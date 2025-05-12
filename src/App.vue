@@ -42,6 +42,16 @@ if (collapsedItem === "true") {
   collapsed.value = true;
 }
 
+// 添加移动端检测
+const isMobile = ref(window.innerWidth <= 768);
+
+// 监听窗口大小变化
+window.addEventListener('resize', () => {
+  isMobile.value = window.innerWidth <= 768;
+  if (isMobile.value) {
+    collapsed.value = true;
+  }
+});
 
 // 获取用户信息
 async function GetUserInfo() {
@@ -107,9 +117,16 @@ const reF = async () => {
 };
 
 
+// 修改 toggDrawer 函数
 function toggDrawer() {
-  collapsed.value = !collapsed.value;
-  VueCookies.set("collapsed", collapsed.value);
+  if (isMobile.value) {
+    // 在移动端时，点击菜单按钮显示/隐藏侧边栏
+    collapsed.value = !collapsed.value;
+  } else {
+    // 在桌面端时，保持原有的折叠/展开行为
+    collapsed.value = !collapsed.value;
+    VueCookies.set("collapsed", collapsed.value);
+  }
 }
 
 function Home() {
@@ -205,7 +222,7 @@ watch(
             <n-layout-header bordered>
               <div class="header-content">
                 <n-space>
-                  <div @click="toggDrawer">
+                  <div @click="toggDrawer" class="menu-button">
                     <n-button circle>
                       <i class='bx bx-menu'></i>
                     </n-button>
@@ -214,7 +231,7 @@ watch(
                     {{ title }}
                   </div>
                 </n-space>
-                <n-space justify="end">
+                <n-space justify="end" class="header-right">
                   <n-button quaternary @click="toggDark()" circle>
                     <template #icon>
                       <i v-if="dark" class='bx bx-sun'></i>
@@ -226,15 +243,22 @@ watch(
                               @select="handleSelect">
                     <n-avatar circle size="medium" :style="{backgroundColor:'#468DF1'}">
                       {{ UserInfo !== undefined ? UserInfo.username : '' }}
-
                     </n-avatar>
                   </n-dropdown>
                 </n-space>
               </div>
             </n-layout-header>
-            <n-layout position="absolute" style="top: 60px;" has-sider>
-              <n-layout-sider :collapsed="collapsed" collapse-mode="width" :collapsed-width="0" :width="240"
-                              :native-scrollbar="false" bordered>
+            <n-layout position="absolute" :style="{ top: '60px' }" has-sider>
+              <n-layout-sider 
+                :collapsed="collapsed" 
+                collapse-mode="width" 
+                :collapsed-width="0" 
+                :width="240"
+                :native-scrollbar="false" 
+                bordered
+                :show-collapsed-content="false"
+                :class="{ 'mobile-sider': isMobile }"
+              >
                 <div class="sider-item">
                   <div class="sider-item-title">个人中心</div>
                   <div class="navigation">
@@ -289,7 +313,7 @@ watch(
                   </div>
                 </div>
               </n-layout-sider>
-              <n-layout :native-scrollbar="false">
+              <n-layout :native-scrollbar="false" :class="{ 'mobile-content': isMobile }">
                 <router-view/>
               </n-layout>
             </n-layout>
@@ -494,5 +518,163 @@ span.n-avatar {
 
 .n-layout-footer {
   text-align: center;
+}
+
+/* 移动端适配样式 */
+@media (max-width: 768px) {
+  .n-layout-header {
+    padding: 0 10px;
+    height: 50px;
+    line-height: 50px;
+  }
+
+  .header-content {
+    align-items: center;
+  }
+
+  .title {
+    font-size: 1.2em;
+  }
+
+  .menu-button {
+    display: block;
+  }
+
+  .header-right {
+    gap: 8px;
+  }
+
+  .n-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 14px !important;
+  }
+
+  .mobile-sider {
+    position: fixed;
+    top: 50px;
+    left: 0;
+    height: calc(100vh - 50px);
+    z-index: 1000;
+    transition: transform 0.3s ease;
+    background-color: var(--n-color);
+  }
+
+  .mobile-sider.n-layout-sider--collapsed {
+    transform: translateX(-100%);
+  }
+
+  /* 修改遮罩层样式 */
+  .mobile-sider::before {
+    content: '';
+    position: fixed;
+    top: 50px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent; /* 移除背景色 */
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .mobile-sider:not(.n-layout-sider--collapsed)::before {
+    opacity: 1;
+    pointer-events: auto; /* 保持点击阻止功能 */
+  }
+
+  .mobile-content {
+    margin-left: 0 !important;
+  }
+
+  .navigation ul li a .icon i {
+    min-width: 50px;
+    font-size: 20px;
+    line-height: 50px;
+  }
+
+  .navigation ul li a .title {
+    height: 50px;
+    line-height: 50px;
+    font-size: 1.1em;
+  }
+
+  .sider-item-title {
+    font-size: 1.2em;
+    padding: 15px;
+  }
+
+  .content {
+    padding: 8px;
+  }
+
+  /* 优化下拉菜单在移动端的显示 */
+  .n-dropdown-menu {
+    max-width: 200px;
+  }
+
+  .n-dropdown-option {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+}
+
+/* 小屏幕手机适配 */
+@media (max-width: 480px) {
+  .n-layout-header {
+    padding: 0 8px;
+  }
+
+  .title {
+    font-size: 1.1em;
+  }
+
+  .n-button {
+    padding: 0 8px;
+  }
+
+  .n-avatar {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 12px !important;
+  }
+
+  .navigation ul li a .icon i {
+    min-width: 40px;
+    font-size: 18px;
+  }
+
+  .navigation ul li a .title {
+    font-size: 1em;
+  }
+
+  .sider-item-title {
+    font-size: 1.1em;
+    padding: 12px;
+  }
+}
+
+/* 优化滚动条 */
+.n-layout-sider {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.n-layout-sider::-webkit-scrollbar {
+  width: 4px;
+}
+
+.n-layout-sider::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.n-layout-sider::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.dark .n-layout-sider::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
 }
 </style>
