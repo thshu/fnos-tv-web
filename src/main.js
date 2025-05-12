@@ -12,6 +12,7 @@ import Snackbar from 'node-snackbar';
 import "node-snackbar/dist/snackbar.min.css"
 import 'boxicons/css/boxicons.min.css'
 import './registerServiceWorker'
+import VueLazyload from 'vue-lazyload'
 
 // 创建一个实例
 const app = createApp(App);
@@ -20,6 +21,9 @@ const pinia = createPinia()
 app.use(VueCookies);
 // 注入naive-ui
 app.use(naive)
+
+
+app.use(VueLazyload)
 
 app.use(router)
 

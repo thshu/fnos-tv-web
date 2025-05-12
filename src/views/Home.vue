@@ -61,8 +61,8 @@ onMounted(async () => {
                     }
                 }">
                   <img v-if="item.poster.length > 0" loading="lazy" class='gallery-img'
-                       :src='COMMON.imgUrl + item.poster' style="border-radius:10px">
-                  <img v-else loading="lazy" class='gallery-img' src='/images/not_gellery.png'>
+                       v-lazy='COMMON.imgUrl + item.poster' style="border-radius:10px">
+                  <img v-else loading="lazy" class='gallery-img' v-lazy="'/images/not_gellery.png'">
                   <!-- 播放图标 (仅在 hover 时显示) -->
                   <div v-if="play_item_guid === item.guid" class="play-icon">
                     <i class="bx bx-play"></i>
@@ -121,8 +121,8 @@ onMounted(async () => {
                                 }
                             }">
                   <img v-if="item.poster !== undefined" loading="lazy" class="carousel-img"
-                       :src='COMMON.imgUrl +  "/92/17/"+item.poster + "?w=200"'>
-                  <img v-else loading="lazy" class='carousel-img' src='/images/not_video.jpg'>
+                       v-lazy='COMMON.imgUrl +  "/92/17/"+item.poster + "?w=200"'>
+                  <img v-else loading="lazy" class='carousel-img' v-lazy="'/images/not_video.jpg'">
                 </router-link>
                 <div v-if="item.title != null" class="view-item-title">
                   {{ item.title }}

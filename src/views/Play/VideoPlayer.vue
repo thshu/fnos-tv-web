@@ -173,9 +173,9 @@ const setting = ref({
   ],
   quality: [],
   icons: {
-    loading: '<img width="60" heigth="60" src="./images/loading.gif">',
-    state: '<img width="60" heigth="60" src="./images/play2.svg">',
-    indicator: '<img width="16" heigth="16" src="./images/indicator.svg">',
+    loading: '<img width="60" heigth="60" v-lazy="./images/loading.gif">',
+    state: '<img width="60" heigth="60" v-lazy="./images/play2.svg">',
+    indicator: '<img width="16" heigth="16" v-lazy="./images/indicator.svg">',
   },
   plugins: [
     artplayerPluginDanmuku(danmu_setting)
@@ -547,7 +547,7 @@ async function UpdateControl(_art) {
       name: '下一集',
       position: 'left',
       index: 11,
-      html: '<img width="22" heigth="22" src="./images/next.svg">',
+      html: '<img width="22" heigth="22" v-lazy="./images/next.svg">',
       tooltip: '下一集',
       style: {
         color: 'green',
@@ -780,7 +780,7 @@ const artF = async (data) => {
     matches.forEach(match => {
       const emojo = emojosMap.get(`[${match}]`);
       if (emojo !== undefined) {
-        text = text.replace(`[${match}]`, `<img src="${emojo}" style="height: 1em; width: auto; vertical-align: middle;"/>`);
+        text = text.replace(`[${match}]`, `<img v-lazy="${emojo}" style="height: 1em; width: auto; vertical-align: middle;"/>`);
       }
     });
     $ref.innerHTML = text;

@@ -1,14 +1,24 @@
 <script setup>
 // 获取 Vue 实例
-import {getCurrentInstance, onMounted, ref} from "vue";
+import {getCurrentInstance, onMounted, ref, computed} from "vue";
 import {useMediaDbData} from '@/store.js'
 import {onBeforeRouteUpdate} from "vue-router";
 
 const MediaDbData = useMediaDbData()
 
 const guid = ref(null);
-const mode = MediaDbData.sort_column;
-const order = MediaDbData.sort_type;
+const mode = computed({
+  get: () => MediaDbData.sort_column,
+  set: (value) => {
+    MediaDbData.sort_column = value;
+  }
+});
+const order = computed({
+  get: () => MediaDbData.sort_type,
+  set: (value) => {
+    MediaDbData.sort_type = value;
+  }
+});
 const showSort = ref(false);
 const size = ref(48);
 const page = ref(1);
@@ -66,8 +76,8 @@ async function GetMediaDbInfos() {
       ]
     },
     "exclude_grouped_video": page.value,
-    "sort_type": MediaDbData.sort_type.value,
-    "sort_column": MediaDbData.sort_column.value,
+    "sort_type": MediaDbData.sort_type,
+    "sort_column": MediaDbData.sort_column,
     "page_size": size.value
   }
   let res = await COMMON.requests("POST", api, true, _data);
@@ -150,8 +160,8 @@ onMounted(async () => {
             </div>
           </div>
           <img v-if="item.poster !== undefined" loading="lazy" class="carousel-img"
-               :src=' COMMON.imgUrl + "/92/17/" + item.poster + "?w=200"'>
-          <img v-else loading="lazy" class='carousel-img' src='/images/not_video.jpg'>
+               v-lazy=' COMMON.imgUrl + "/92/17/" + item.poster + "?w=200"'>
+          <img v-else loading="lazy" class='carousel-img' v-lazy="'/images/not_video.jpg'">
           <div class="view-item-title">
             {{ item.title }}
           </div>

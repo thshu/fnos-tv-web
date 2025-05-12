@@ -142,7 +142,7 @@ onMounted(async () => {
       <div class="mainColumn">
         <div class="view-scroller">
           <div class="view-card-image">
-            <img :src='COMMON.imgUrl + "/92/17/"+VideoDataInfo.posters + "?w=200"'
+            <img v-lazy='COMMON.imgUrl + "/92/17/"+VideoDataInfo.posters + "?w=200"'
                  alt="">
           </div>
           <div class="view-card-detail detailTextContainer">
@@ -200,7 +200,7 @@ onMounted(async () => {
                                         }
                                     }">
                     <div class="show-img">
-                      <img :src='COMMON.imgUrl + item.poster + "?w=200"'
+                      <img v-lazy='COMMON.imgUrl + item.poster + "?w=200"'
                            alt="">
                     </div>
                   </router-link>
@@ -222,8 +222,8 @@ onMounted(async () => {
                  @mouseleave="play_item_guid = null" @click="Play(item.guid)">
               <div>
                 <img v-if="item.poster.length > 0" loading="lazy" class='gallery-img'
-                     :src='COMMON.imgUrl + item.poster' style="border-radius:10px">
-                <img v-else loading="lazy" class='gallery-img' src='/images/not_gellery.png'>
+                     v-lazy='COMMON.imgUrl + item.poster' style="border-radius:10px">
+                <img v-else loading="lazy" class='gallery-img' v-lazy="'/images/not_gellery.png'">
                 <!-- 播放图标 (仅在 hover 时显示) -->
                 <div v-if="play_item_guid === item.guid" class="play-icon">
                   <i class="bx bx-play"></i>
@@ -264,9 +264,9 @@ onMounted(async () => {
                   <router-link :to="{ path: '/person', query: { id: item.id, } }">
                     <div class="show-img">
                       <img v-if="item.profile_path!==''" loading="lazy"
-                           :src='COMMON.imgUrl + "/t/p/w220_and_h330_face/" + item.profile_path'
+                           v-lazy='COMMON.imgUrl + "/t/p/w220_and_h330_face/" + item.profile_path'
                            alt="">
-                      <img v-else loading="lazy" src="/images/not_person.jpg" alt="">
+                      <img v-else loading="lazy" v-lazy="'/images/not_person.jpg'" alt="">
                     </div>
                   </router-link>
                   <div class="show-name">
