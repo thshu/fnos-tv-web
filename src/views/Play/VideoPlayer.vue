@@ -688,49 +688,59 @@ const artF = async (data) => {
   art.on('video:ratechange', () => {
     localStorage.playbackRate = art.playbackRate;
   });
+  let lastSkipIndex = -1;
+  let lastDanmuLoadedUntil = 0;
   art.on("video:timeupdate", () => {
-    debounce(function () {
-      var currentTime = art.currentTime;  // 当前时间
+    const currentTime = art.currentTime;
 
-      var skipData = skipList.value.find(o => currentTime > o.startTime && currentTime < o.endTime);  // 查找匹配的跳过数据
-      if (currentTime > art.duration / 3) {
-        return
+    // 跳过片头片尾
+    if (skipList.value && skipList.value.length > 0) {
+      const skipIndex = skipList.value.findIndex(
+        o => currentTime > o.startTime && currentTime < o.endTime
+      );
+      const is_skip = VueCookies.get('skip') === 'true' || VueCookies.get('skip') === null;
+      if (
+        skipIndex !== -1 &&
+        is_skip &&
+        lastSkipIndex !== skipIndex
+      ) {
+        COMMON.ShowMsg("当前内容跳过");
+        art.currentTime = skipList.value[skipIndex].endTime;
+        lastSkipIndex = skipIndex;
+        return; // 跳过后不再执行后续弹幕加载
       }
-      var is_skip = VueCookies.get('skip') === 'true' || VueCookies.get('skip') === null;
-
-      if ((skipData !== undefined) && (is_skip === null || is_skip) && !(art.currentTime < skipData.startTime || art.currentTime > skipData.endTime)) {
-        // art.currentTime = 1
-        COMMON.ShowMsg("当前内容跳过")
-        art.currentTime = skipData.endTime;
+      if (skipIndex === -1) {
+        lastSkipIndex = -1;
       }
+    }
 
-
-    }, 10)()
+    // 弹幕分段加载
     let episode_number = playInfo.value.episode_number === undefined ? 1 : playInfo.value.episode_number;
     if (episode_number in allDanmaku.value) {
-      let danmuList = allDanmaku.value[episode_number]
+      let danmuList = allDanmaku.value[episode_number];
       let current = art.currentTime;
-      // 当播放到下一个未加载区间时
       if (current >= danmuConfig.value.loadedUntil) {
-        if (danmuConfig.value.loadedUntil === 0 || (current - danmuConfig.value.loadedUntil) > (danmuConfig.value.segmentDuration * 2)) {
+        // 避免重复加载同一段
+        if (danmuConfig.value.loadedUntil === lastDanmuLoadedUntil) return;
+        lastDanmuLoadedUntil = danmuConfig.value.loadedUntil;
+
+        if (
+          danmuConfig.value.loadedUntil === 0 ||
+          (current - danmuConfig.value.loadedUntil) > (danmuConfig.value.segmentDuration * 2)
+        ) {
           danmuConfig.value.loadedUntil = current - 5;
         }
         const startTime = danmuConfig.value.loadedUntil;
         const endTime = startTime + danmuConfig.value.segmentDuration;
-        const startIndex = sortedIndexBy(danmuList, {time: danmuConfig.value.loadedUntil}, o => o.time);
-        const segment = [];
-        for (let i = startIndex; i < danmuList.length && danmuList[i].time < endTime; i++) {
-          segment.push(danmuList[i]);
-        }
-
+        const startIndex = sortedIndexBy(danmuList, { time: danmuConfig.value.loadedUntil }, o => o.time);
+        const segment = danmuList.slice(startIndex).filter(d => d.time < endTime);
         if (segment.length) {
           art.plugins.artplayerPluginDanmuku.load(segment); // 追加弹幕
         }
-        danmuConfig.value.loadedUntil = endTime;  // 更新下一次加载起点
+        danmuConfig.value.loadedUntil = endTime;
       }
     }
-
-  })
+  });
   art.on('video:ended', () => {
     play_next()
   });
