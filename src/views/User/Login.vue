@@ -1,6 +1,6 @@
 <script setup>
 import VueCookies from 'vue-cookies';
-import {getCurrentInstance, onMounted, ref, watch} from "vue";
+import {getCurrentInstance, onMounted, ref, watch, onUnmounted} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import axios from "axios";
 import QrcodeVue from 'qrcode.vue'
@@ -26,6 +26,8 @@ let title = COMMON.title
 const route = useRoute()
 const qrData = ref(null)
 const isQr = ref(false)
+const qrCode = ref(null)  // 存储二维码code
+const qrCheckTimer = ref(null)  // 存储定时器
 
 
 async function LoginUser() {
@@ -54,6 +56,49 @@ async function NasLogin(code) {
   window.close() // 关闭当前窗口
 }
 
+// 检查二维码登录状态
+async function checkQrLoginStatus() {
+  if (!qrCode.value) return;
+  
+  try {
+    let api = `/api/v1/logincode/${qrCode.value}`
+    let res = await COMMON.requests("GET", api, false)
+    if (res.status === 'Success') {
+      // 登录成功，清除定时器
+      clearInterval(qrCheckTimer.value)
+      qrCheckTimer.value = null
+      
+      // 设置token并跳转
+      VueCookies.set('authorization', res.token, -1)
+      COMMON.ShowMsg('登录成功！')
+      await router.push('/')
+    }
+  } catch (error) {
+    console.error('检查二维码登录状态失败:', error)
+  }
+}
+
+// 开始监控二维码登录状态
+function startQrLoginCheck() {
+  // 清除可能存在的旧定时器
+  if (qrCheckTimer.value) {
+    clearInterval(qrCheckTimer.value)
+    qrCheckTimer.value = null
+  }
+  
+  // 每2秒检查一次登录状态
+  qrCheckTimer.value = setInterval(checkQrLoginStatus, 2000)
+}
+
+// 停止监控二维码登录状态
+function stopQrLoginCheck() {
+  if (qrCheckTimer.value) {
+    clearInterval(qrCheckTimer.value)
+    qrCheckTimer.value = null
+  }
+  qrCode.value = null
+}
+
 async function getQr() {
   let api = "/api/v1/logincode/generate"
   let res = await COMMON.requests("PUT", api, false)
@@ -62,8 +107,26 @@ async function getQr() {
     COMMON.ShowMsg('获取登录二维码失败！')
     return;
   }
-  qrData.value = `fn://com.trim.tv/trim.media-center?platform=AndroidTV&osver=35&clientName=飞牛影视TV&code=${_code}&event=scanLogin&deviceName=${ConfigData.value.server_name}`;  // 直接使用原始字符串，不进行 base64 编码
+  qrCode.value = _code  // 保存二维码code
+  qrData.value = `fn://com.trim.tv/trim.media-center?platform=AndroidTV&osver=35&clientName=飞牛影视TV&code=${_code}&event=scanLogin&deviceName=${ConfigData.value.server_name}`
+  startQrLoginCheck()  // 开始监控登录状态
 }
+
+// 监听二维码显示状态
+watch(isQr, (newVal) => {
+  if (newVal) {
+    // 切换到二维码登录时，获取新的二维码
+    getQr()
+  } else {
+    // 切换到账号登录时，停止监控
+    stopQrLoginCheck()
+  }
+})
+
+// 组件卸载时清理定时器
+onUnmounted(() => {
+  stopQrLoginCheck()
+})
 
 async function getConfig() {
   let api = '/api/v1/sys/config'
