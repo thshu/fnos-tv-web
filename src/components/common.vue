@@ -53,8 +53,7 @@ LoginInstance.interceptors.request.use(
               code: code  // 带上原始跳转来源
             }
           })
-        }
-        else {
+        } else {
           router.push('/login')
         }
       }
@@ -116,6 +115,8 @@ async function requests(method, uri, isLogin = false, data = {}) {
   }
   if (method === "POST") {
     return await instance.post(uri, data)
+  } else if (method === "PUT") {
+    return await instance.put(uri, data)
   } else {
     return await instance.get(uri)
   }
