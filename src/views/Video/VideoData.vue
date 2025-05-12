@@ -52,7 +52,7 @@ async function GetPayInfo() {
     "item_guid": guid.value
   }
   playInfo.value = await COMMON.requests("POST", api, true, _data);
-  play_guid.value = playInfo.value.item.guid;
+  play_guid.value = playInfo.value.item.parent_guid;
 }
 
 async function GetPersonList() {
@@ -71,7 +71,9 @@ async function GetEpisodeList() {
 }
 
 async function Play(_guid = play_guid.value) {
-  PlayerData.episode_guid = _guid
+  if(_guid !== play_guid.value){
+    PlayerData.episode_guid = _guid
+  }
   let _gallery_type = gallery_type.value;
   if(_gallery_type === "season"){
     _gallery_type = "TV"
@@ -80,7 +82,7 @@ async function Play(_guid = play_guid.value) {
     path: "/player",
     query: {
       gallery_type: playInfo.value.type,
-      guid: _guid
+      guid: play_guid.value
     }
   })
 }
