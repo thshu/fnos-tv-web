@@ -64,24 +64,22 @@ var danmu_setting = window.localStorage.danmu_setting;
 if (danmu_setting === undefined) {
   danmu_setting = JSON.stringify({
     value: {
-      speed: 8.5, // 弹幕持续时间，单位秒，范围在[1 ~ 10]
-      opacity: 0.5, // 弹幕透明度，范围在[0 ~ 1]
-      fontSize: '3%', // 字体大小，支持数字和百分比
-      color: '#FFFFFF', // 默认字体颜色
-      mode: 0, // 默认模式，0-滚动，1-静止
-      margin: [10, '75%'], // 弹幕上下边距，支持数字和百分比
-      antiOverlap: true, // 是否防重叠
-      useWorker: true, // 是否使用 web worker
-      synchronousPlayback: true, // 是否同步到播放速度
-      theme: 'light', // 输入框自定义挂载时的主题色，默认为 dark，可以选填亮色 light
-      heatmap: false, // 是否开启弹幕热度图, 默认为 false
-      beforeEmit: (danmu) => !!danmu.text.trim(), // 发送弹幕前的自定义校验，返回 true 则可以发送
+      speed: 8.5,
+      opacity: 0.5,
+      fontSize: window.innerWidth <= 768 ? '2.5%' : '3%',
+      color: '#FFFFFF',
+      mode: 0,
+      margin: window.innerWidth <= 768 ? [5, '85%'] : [10, '75%'],
+      antiOverlap: true,
+      useWorker: true,
+      synchronousPlayback: true,
+      theme: 'light',
+      heatmap: false,
+      beforeEmit: (danmu) => !!danmu.text.trim(),
       emitter: false,
       mount: undefined
-
     }
   })
-
 }
 danmu_setting = JSON.parse(danmu_setting).value
 
@@ -175,9 +173,9 @@ const setting = ref({
   ],
   quality: [],
   icons: {
-    loading: '<img width="60" heigth="60" src="./images/loading.gif">',
-    state: '<img width="60" heigth="60" src="./images/play2.svg">',
-    indicator: '<img width="16" heigth="16" src="./images/indicator.svg">',
+    loading: '<img width="60" heigth="60" v-lazy="./images/loading.gif">',
+    state: '<img width="60" heigth="60" v-lazy="./images/play2.svg">',
+    indicator: '<img width="16" heigth="16" v-lazy="./images/indicator.svg">',
   },
   plugins: [
     artplayerPluginDanmuku(danmu_setting)
@@ -185,10 +183,8 @@ const setting = ref({
 })
 const ArtplayerStyle = {
   width: '100%',
-  // 用 vw 单位保持 16:9：100vw * 9 / 16 = 56.25vw
-  height: '56.25vw',
-  // 可选：不让它超过视口高度，避免滚动
-  maxHeight: 'calc(100vh - 150px)',
+  height: window.innerWidth <= 768 ? '56.25vw' : '56.25vw',
+  maxHeight: window.innerWidth <= 768 ? 'calc(100vh - 100px)' : 'calc(100vh - 150px)',
   margin: '0 auto',
 }
 
@@ -306,7 +302,7 @@ async function switchQuality(item, $dom, event) {
 
     art.loading.show = true;
     let res = await COMMON.requests("POST", api, true, _data);
-    
+
     if (res.updateM3u8) {
       // 更新当前画质状态
       currentQuality.value = {
@@ -314,7 +310,7 @@ async function switchQuality(item, $dom, event) {
         bitrate: qualityData.bitrate,
         html: `${qualityData.resolution} (${(qualityData.bitrate / 1000000).toFixed(1)}Mbps)`
       };
-      
+
       // 更新播放器URL
       await art.switchQuality(url.value);
       COMMON.ShowMsg(`已切换到${qualityData.resolution} (${(qualityData.bitrate / 1000000).toFixed(1)}Mbps)`);
@@ -487,15 +483,15 @@ async function addArtConfig(_art, key, v) {
 
 async function UpdateControl(_art) {
   let forData = []
-  
+
   // 添加画质选择器
   if (qualitySelector.value.length > 0) {
     const qualityControl = {
       name: '画质',
       position: 'right',
-      html: currentQuality.value ? 
-        `${currentQuality.value.resolution} (${(currentQuality.value.bitrate / 1000000).toFixed(1)}Mbps)` : 
-        '画质',
+      html: currentQuality.value ?
+          `${currentQuality.value.resolution} (${(currentQuality.value.bitrate / 1000000).toFixed(1)}Mbps)` :
+          '画质',
       selector: qualitySelector.value.map(group => ({
         html: group.html,
         selector: group.selector.map(item => ({
@@ -551,7 +547,7 @@ async function UpdateControl(_art) {
       name: '下一集',
       position: 'left',
       index: 11,
-      html: '<img width="22" heigth="22" src="./images/next.svg">',
+      html: '<img width="22" heigth="22" v-lazy="./images/next.svg">',
       tooltip: '下一集',
       style: {
         color: 'green',
@@ -689,22 +685,21 @@ const artF = async (data) => {
   });
   art.on("video:timeupdate", () => {
     debounce(function () {
-      if (gallery_type.value === "TV") {
-        var currentTime = art.currentTime;  // 当前时间
+      var currentTime = art.currentTime;  // 当前时间
 
-        var skipData = skipList.value.find(o => currentTime > o.startTime && currentTime < o.endTime);  // 查找匹配的跳过数据
-        if (currentTime > art.duration / 3) {
-          return
-        }
-        var is_skip = VueCookies.get('skip') === 'true' || VueCookies.get('skip') === null;
-
-        if ((skipData !== undefined) && (is_skip === null || is_skip) && !(art.currentTime < skipData.startTime || art.currentTime > skipData.endTime)) {
-          // art.currentTime = 1
-          COMMON.ShowMsg("当前内容跳过")
-          art.currentTime = skipData.endTime;
-        }
-
+      var skipData = skipList.value.find(o => currentTime > o.startTime && currentTime < o.endTime);  // 查找匹配的跳过数据
+      if (currentTime > art.duration / 3) {
+        return
       }
+      var is_skip = VueCookies.get('skip') === 'true' || VueCookies.get('skip') === null;
+
+      if ((skipData !== undefined) && (is_skip === null || is_skip) && !(art.currentTime < skipData.startTime || art.currentTime > skipData.endTime)) {
+        // art.currentTime = 1
+        COMMON.ShowMsg("当前内容跳过")
+        art.currentTime = skipData.endTime;
+      }
+
+
     }, 10)()
     let episode_number = playInfo.value.episode_number === undefined ? 1 : playInfo.value.episode_number;
     if (episode_number in allDanmaku.value) {
@@ -785,7 +780,7 @@ const artF = async (data) => {
     matches.forEach(match => {
       const emojo = emojosMap.get(`[${match}]`);
       if (emojo !== undefined) {
-        text = text.replace(`[${match}]`, `<img src="${emojo}" style="height: 1em; width: auto; vertical-align: middle;"/>`);
+        text = text.replace(`[${match}]`, `<img v-lazy="${emojo}" style="height: 1em; width: auto; vertical-align: middle;"/>`);
       }
     });
     $ref.innerHTML = text;
@@ -1223,6 +1218,100 @@ img.play-icon {
   img.play-icon {
     width: 40px;
     height: 40px;
+  }
+}
+
+/* 移动端适配样式 */
+@media (max-width: 768px) {
+  .player .art-player {
+    height: 56.25vw;
+    max-height: calc(100vh - 100px);
+  }
+
+  .data-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .header-right {
+    display: flex;
+    gap: 8px;
+  }
+
+  .data-content {
+    font-size: 14px;
+  }
+
+  .season-title {
+    font-size: 1.1em;
+  }
+
+  /* 调整外部播放器列表布局 */
+  .play-list {
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: flex-start;
+  }
+
+  .play-list .play-item {
+    width: calc(33.33% - 16px);
+    text-align: center;
+  }
+
+  img.play-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  /* 调整弹幕标题样式 */
+  :deep(.art-title) {
+    font-size: 14px !important;
+    padding: 2px 6px !important;
+  }
+
+  /* 调整设置弹窗宽度 */
+  :deep(.n-modal) {
+    width: 90vw !important;
+    max-width: 30em;
+  }
+
+  /* 调整控制栏按钮大小 */
+  :deep(.art-control) {
+    height: 40px !important;
+  }
+
+  :deep(.art-control .art-control-item) {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  :deep(.art-control .art-control-item i) {
+    font-size: 16px !important;
+  }
+}
+
+/* 超小屏幕适配 */
+@media (max-width: 480px) {
+  .play-list .play-item {
+    width: calc(50% - 16px);
+  }
+
+  img.play-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  :deep(.art-control) {
+    height: 36px !important;
+  }
+
+  :deep(.art-control .art-control-item) {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  :deep(.art-control .art-control-item i) {
+    font-size: 14px !important;
   }
 }
 </style>

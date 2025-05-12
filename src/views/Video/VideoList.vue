@@ -1,14 +1,24 @@
 <script setup>
 // 获取 Vue 实例
-import {getCurrentInstance, onMounted, ref} from "vue";
+import {getCurrentInstance, onMounted, ref, computed} from "vue";
 import {useMediaDbData} from '@/store.js'
 import {onBeforeRouteUpdate} from "vue-router";
 
 const MediaDbData = useMediaDbData()
 
 const guid = ref(null);
-const mode = MediaDbData.sort_column;
-const order = MediaDbData.sort_type;
+const mode = computed({
+  get: () => MediaDbData.sort_column,
+  set: (value) => {
+    MediaDbData.sort_column = value;
+  }
+});
+const order = computed({
+  get: () => MediaDbData.sort_type,
+  set: (value) => {
+    MediaDbData.sort_type = value;
+  }
+});
 const showSort = ref(false);
 const size = ref(48);
 const page = ref(1);
@@ -66,8 +76,8 @@ async function GetMediaDbInfos() {
       ]
     },
     "exclude_grouped_video": page.value,
-    "sort_type": MediaDbData.sort_type.value,
-    "sort_column": MediaDbData.sort_column.value,
+    "sort_type": MediaDbData.sort_type,
+    "sort_column": MediaDbData.sort_column,
     "page_size": size.value
   }
   let res = await COMMON.requests("POST", api, true, _data);
@@ -150,8 +160,8 @@ onMounted(async () => {
             </div>
           </div>
           <img v-if="item.poster !== undefined" loading="lazy" class="carousel-img"
-               :src=' COMMON.imgUrl + "/92/17/" + item.poster + "?w=200"'>
-          <img v-else loading="lazy" class='carousel-img' src='/images/not_video.jpg'>
+               v-lazy=' COMMON.imgUrl + "/92/17/" + item.poster + "?w=200"'>
+          <img v-else loading="lazy" class='carousel-img' v-lazy="'/images/not_video.jpg'">
           <div class="view-item-title">
             {{ item.title }}
           </div>
@@ -203,6 +213,7 @@ onMounted(async () => {
   margin-top: 20px;
   margin-bottom: 20px;
   text-align: center;
+  padding: 0 10px;
 }
 
 .seriesTab .seriesTab-list {
@@ -227,37 +238,34 @@ onMounted(async () => {
 
 .view-card-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 11.5%);
-  grid-gap: 6px;
-  justify-content: space-between;
-}
-
-@media (max-width: 750px) {
-  .view-card-list {
-    grid-template-columns: repeat(auto-fill, 31%);
-  }
-}
-
-.card-show-title {
-  font-size: 1.2em;
-  font-weight: 400;
-  padding-bottom: 16px;
-}
-
-.card-shows {
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-gap: 12px;
+  padding: 0 10px;
 }
 
 .view-item {
   text-align: center;
+  position: relative;
 }
 
 .view-card-list img.carousel-img {
   width: 100%;
   aspect-ratio: 11/16;
-  border-radius: 5px;
+  border-radius: 8px;
+  object-fit: cover;
 }
 
+.view-item-title {
+  font-size: 0.9em;
+  margin-top: 8px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  padding: 0 4px;
+}
 
 .view-card-list .view-item {
   transform: translateY(0) scale(1);
@@ -272,51 +280,84 @@ onMounted(async () => {
 .view-item-header {
   position: absolute;
   width: 95%;
-  padding-left: 4px;
+  padding: 8px;
+  z-index: 1;
 }
 
 .view-item-tag-list {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 4px;
 }
 
 .view-item-tag-list .count {
   background-color: #2d8cf0 !important;
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   color: white;
-  padding: 4px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .rating {
   color: yellow;
 }
 
-.project {
-  margin-top: 10px;
-}
-
-.project .n-pagination {
-  float: right;
-}
-
-@media (max-width: 767px) {
-  .card-show-title {
-    font-size: 0.8em;
-    font-weight: 400;
-    padding-bottom: 10px;
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .view-card-list {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-gap: 8px;
+    padding: 0 8px;
   }
 
   .view-item-title {
-    font-size: 0.5em;
-    font-weight: 400;
+    font-size: 0.8em;
+    margin-top: 6px;
   }
 
-  .custom-arrow.next {
-    bottom: 60px;
+  .view-item-header {
+    padding: 4px;
+  }
+
+  .view-item-tag-list .count {
+    width: 20px;
+    height: 20px;
+  }
+
+  .sort-title {
+    font-size: 1em;
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
+
+  .sort-list .sort-item {
+    font-size: 1em;
+  }
+
+  /* 调整模态框在移动端的样式 */
+  :deep(.n-card) {
+    width: 90% !important;
+    max-width: 400px;
+  }
+
+  :deep(.n-modal) {
+    padding: 16px;
+  }
+}
+
+/* 小屏幕手机适配 */
+@media (max-width: 375px) {
+  .view-card-list {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-gap: 6px;
+  }
+
+  .view-item-title {
+    font-size: 0.75em;
   }
 }
 </style>
