@@ -56,7 +56,9 @@ const danmuConfig = ref({
 const qualitySelector = ref([]);
 const currentQuality = ref(null);
 
-const IsFullscreen = ()=>{art.fullscreen}
+const IsFullscreen = () => {
+  art.fullscreen
+}
 
 guid.value = proxy.$route.query.guid
 episode_guid.value = PlayerData.episode_guid
@@ -696,13 +698,13 @@ const artF = async (data) => {
     // 跳过片头片尾
     if (skipList.value && skipList.value.length > 0) {
       const skipIndex = skipList.value.findIndex(
-        o => currentTime > o.startTime && currentTime < o.endTime
+          o => currentTime > o.startTime && currentTime < o.endTime
       );
       const is_skip = VueCookies.get('skip') === 'true' || VueCookies.get('skip') === null;
       if (
-        skipIndex !== -1 &&
-        is_skip &&
-        lastSkipIndex !== skipIndex
+          skipIndex !== -1 &&
+          is_skip &&
+          lastSkipIndex !== skipIndex
       ) {
         COMMON.ShowMsg("当前内容跳过");
         art.currentTime = skipList.value[skipIndex].endTime;
@@ -716,7 +718,7 @@ const artF = async (data) => {
 
     // 弹幕分段加载
     let episode_number = playInfo.value.episode_number === undefined ? 1 : playInfo.value.episode_number;
-    if (episode_number in allDanmaku.value) {
+    if (episode_number in allDanmaku.value && art.plugins.artplayerPluginDanmuku.isHide) {
       let danmuList = allDanmaku.value[episode_number];
       let current = art.currentTime;
       if (current >= danmuConfig.value.loadedUntil) {
@@ -725,14 +727,14 @@ const artF = async (data) => {
         lastDanmuLoadedUntil = danmuConfig.value.loadedUntil;
 
         if (
-          danmuConfig.value.loadedUntil === 0 ||
-          (current - danmuConfig.value.loadedUntil) > (danmuConfig.value.segmentDuration * 2)
+            danmuConfig.value.loadedUntil === 0 ||
+            (current - danmuConfig.value.loadedUntil) > (danmuConfig.value.segmentDuration * 2)
         ) {
           danmuConfig.value.loadedUntil = current - 5;
         }
         const startTime = danmuConfig.value.loadedUntil;
         const endTime = startTime + danmuConfig.value.segmentDuration;
-        const startIndex = sortedIndexBy(danmuList, { time: danmuConfig.value.loadedUntil }, o => o.time);
+        const startIndex = sortedIndexBy(danmuList, {time: danmuConfig.value.loadedUntil}, o => o.time);
         const segment = danmuList.slice(startIndex).filter(d => d.time < endTime);
         if (segment.length) {
           art.plugins.artplayerPluginDanmuku.load(segment); // 追加弹幕
