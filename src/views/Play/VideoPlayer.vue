@@ -718,7 +718,7 @@ const artF = async (data) => {
 
     // 弹幕分段加载
     let episode_number = playInfo.value.episode_number === undefined ? 1 : playInfo.value.episode_number;
-    if (episode_number in allDanmaku.value && !art.plugins.artplayerPluginDanmuku.isHide) {
+    if (episode_number in allDanmaku.value) {
       let danmuList = allDanmaku.value[episode_number];
       let current = art.currentTime;
       if (current >= danmuConfig.value.loadedUntil) {
@@ -736,7 +736,7 @@ const artF = async (data) => {
         const endTime = startTime + danmuConfig.value.segmentDuration;
         const startIndex = sortedIndexBy(danmuList, {time: danmuConfig.value.loadedUntil}, o => o.time);
         const segment = danmuList.slice(startIndex).filter(d => d.time < endTime);
-        if (segment.length) {
+        if (segment.length && !art.plugins.artplayerPluginDanmuku.isHide) {
           art.plugins.artplayerPluginDanmuku.load(segment); // 追加弹幕
         }
         danmuConfig.value.loadedUntil = endTime;
