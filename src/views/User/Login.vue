@@ -186,7 +186,7 @@ watch(() => route.query.code, (code) => {
                 <i class='bx bx-lock-alt'></i>
               </div>
               <input v-model="user.password" type="password" name="密码" placeholder="请输入密码" required=""
-                     autocomplete="off">
+                     autocomplete="off" @keyup.enter="LoginUser">
             </div>
             <div class="form-control">
               <button class="btn login-btn" @click="LoginUser">登录</button>
