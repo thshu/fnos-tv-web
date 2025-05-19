@@ -718,7 +718,7 @@ const artF = async (data) => {
 
     // 弹幕分段加载
     let episode_number = playInfo.value.episode_number === undefined ? 1 : playInfo.value.episode_number;
-    if (episode_number in allDanmaku.value && art.plugins.artplayerPluginDanmuku.isHide) {
+    if (episode_number in allDanmaku.value && !art.plugins.artplayerPluginDanmuku.isHide) {
       let danmuList = allDanmaku.value[episode_number];
       let current = art.currentTime;
       if (current >= danmuConfig.value.loadedUntil) {
