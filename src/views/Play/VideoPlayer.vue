@@ -354,8 +354,14 @@ async function GetPalyUrl() {
   }
   let api = "/api/v1/play/play"
   let _channels = (StreamList.value.audio_streams.length !== 1 && StreamList.value.audio_streams.find(o => o.codec_name === "aac") !== undefined ? StreamList.value.audio_streams.find(o => o.codec_name === "aac") : StreamList.value.audio_streams[0]).channels;
+  let regex = /\d+-\d+-\S+/;
+  let local = StreamList.value.files.find(o=>!regex.test(o.path))
+  debugger
+  if(local === null || local === undefined) {
+    local = StreamList.value.files[0];
+  }
   let _data = {
-    "media_guid": StreamList.value.video_streams[0].media_guid,
+    "media_guid": local.guid,
     "video_guid": StreamList.value.video_streams[0].guid,
     "video_encoder": StreamList.value.video_streams[0].codec_name,
     "resolution": QualityData.value[0].resolution,
