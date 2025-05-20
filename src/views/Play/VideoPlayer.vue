@@ -515,7 +515,7 @@ async function UpdateControl(_art) {
     disable: (!art.fullscreen && COMMON.isMo),
     name: '倍速',
     position: 'right',
-    html: '倍速',
+    html: art.playbackRate + 'X',
     selector: [
       {
         html: 0.5,
@@ -543,9 +543,15 @@ async function UpdateControl(_art) {
     ],
     onSelect: function (item, $dom) {
       art.playbackRate = item.html;
-      return `${item.html}`;
+      return `${item.html}X`;
     },
   }
+  倍速.selector.forEach(item => {
+    if (item.html === art.playbackRate){
+      item.default = true;
+    }
+  })
+  debugger
   forData.push(倍速)
 
   if (EpisodeList.value !== null && EpisodeList.value.length > 0) {
@@ -642,6 +648,7 @@ async function ready() {
   if (timerSendPlayRecord.value !== null) {
     clearInterval(timerSendPlayRecord.value)
   }
+  art.playbackRate = localStorage.playbackRate
   art.loading.show = false;
   timerSendPlayRecord.value = setInterval(SendPlayRecord, 10000)
   art.seek = playInfo.value.watched_ts
