@@ -565,7 +565,7 @@ async function UpdateControl(_art) {
     let 下一集 = {
       name: '下一集',
       position: 'left',
-      index: 3,
+      index: 11,
       html: '<img width="22" heigth="22" src="./images/next.svg">',
       tooltip: '下一集',
       style: {
