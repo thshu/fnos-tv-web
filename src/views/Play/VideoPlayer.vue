@@ -492,6 +492,7 @@ async function UpdateControl(_art) {
   if (qualitySelector.value.length > 0) {
     const qualityControl = {
       disable: (!art.fullscreen && COMMON.isMo),
+      index: 1,
       name: '画质',
       position: 'right',
       html: currentQuality.value ?
@@ -513,6 +514,7 @@ async function UpdateControl(_art) {
 
   let 倍速 = {
     disable: (!art.fullscreen && COMMON.isMo),
+    index: 2,
     name: '倍速',
     position: 'right',
     html: art.playbackRate + 'X',
@@ -551,14 +553,13 @@ async function UpdateControl(_art) {
       item.default = true;
     }
   })
-  debugger
   forData.push(倍速)
 
   if (EpisodeList.value !== null && EpisodeList.value.length > 0) {
     let 下一集 = {
       name: '下一集',
       position: 'left',
-      index: 11,
+      index: 3,
       html: '<img width="22" heigth="22" src="./images/next.svg">',
       tooltip: '下一集',
       style: {
@@ -584,6 +585,7 @@ async function UpdateControl(_art) {
     let 选集 = {
       disable: (!art.fullscreen && COMMON.isMo),
       name: '选集',
+      index: 4,
       position: 'right',
       html: "选集",
       selector: 选集_selector,
