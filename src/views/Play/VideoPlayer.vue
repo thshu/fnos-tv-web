@@ -492,6 +492,7 @@ async function UpdateControl(_art) {
   if (qualitySelector.value.length > 0) {
     const qualityControl = {
       disable: (!art.fullscreen && COMMON.isMo),
+      index: 1,
       name: '画质',
       position: 'right',
       html: currentQuality.value ?
@@ -513,9 +514,10 @@ async function UpdateControl(_art) {
 
   let 倍速 = {
     disable: (!art.fullscreen && COMMON.isMo),
+    index: 2,
     name: '倍速',
     position: 'right',
-    html: '倍速',
+    html: art.playbackRate + 'X',
     selector: [
       {
         html: 0.5,
@@ -543,16 +545,21 @@ async function UpdateControl(_art) {
     ],
     onSelect: function (item, $dom) {
       art.playbackRate = item.html;
-      return `${item.html}`;
+      return `${item.html}X`;
     },
   }
+  倍速.selector.forEach(item => {
+    if (item.html === art.playbackRate){
+      item.default = true;
+    }
+  })
   forData.push(倍速)
 
   if (EpisodeList.value !== null && EpisodeList.value.length > 0) {
     let 下一集 = {
       name: '下一集',
       position: 'left',
-      index: 11,
+      index: 3,
       html: '<img width="22" heigth="22" src="./images/next.svg">',
       tooltip: '下一集',
       style: {
@@ -578,6 +585,7 @@ async function UpdateControl(_art) {
     let 选集 = {
       disable: (!art.fullscreen && COMMON.isMo),
       name: '选集',
+      index: 4,
       position: 'right',
       html: "选集",
       selector: 选集_selector,
@@ -642,6 +650,7 @@ async function ready() {
   if (timerSendPlayRecord.value !== null) {
     clearInterval(timerSendPlayRecord.value)
   }
+  art.playbackRate = localStorage.playbackRate
   art.loading.show = false;
   timerSendPlayRecord.value = setInterval(SendPlayRecord, 10000)
   art.seek = playInfo.value.watched_ts
