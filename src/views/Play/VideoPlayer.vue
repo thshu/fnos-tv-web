@@ -356,7 +356,6 @@ async function GetPalyUrl() {
   let _channels = (StreamList.value.audio_streams.length !== 1 && StreamList.value.audio_streams.find(o => o.codec_name === "aac") !== undefined ? StreamList.value.audio_streams.find(o => o.codec_name === "aac") : StreamList.value.audio_streams[0]).channels;
   let regex = /\d+-\d+-\S+/;
   let local = StreamList.value.files.find(o=>!regex.test(o.path))
-  debugger
   if(local === null || local === undefined) {
     local = StreamList.value.files[0];
   }

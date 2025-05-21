@@ -221,7 +221,7 @@ onMounted(async () => {
                  @mouseenter="play_item_guid = item.guid"
                  @mouseleave="play_item_guid = null" @click="Play(item.guid)">
               <div>
-                <img v-if="item.poster.length > 0" loading="lazy" class='gallery-img'
+                <img v-if="item.poster!== undefined && item.poster.length > 0" loading="lazy" class='gallery-img'
                      v-lazy='COMMON.imgUrl + item.poster' style="border-radius:10px">
                 <img v-else loading="lazy" class='gallery-img' v-lazy="'/images/not_gellery.png'">
                 <!-- 播放图标 (仅在 hover 时显示) -->
