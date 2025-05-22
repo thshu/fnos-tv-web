@@ -13,6 +13,7 @@ import artplayerPluginDanmuku from "artplayer-plugin-danmuku";
 const instance = getCurrentInstance();
 const proxy = instance.appContext.config.globalProperties;
 const COMMON = proxy.$COMMON;
+const device = proxy.$device;
 
 const PlayerData = usePlayerData()
 let art = null;
@@ -344,8 +345,11 @@ async function GetPayInfo(_guid) {
 }
 
 async function GetStreamList() {
-  let api = "/api/v1/stream/list/" + episode_guid.value;
+  let api = "/api/v1/stream/list/" + episode_guid.value + '?before_play=1';
   StreamList.value = await COMMON.requests("GET", api, true)
+}
+async function GetChannels(s){
+ return  s < 6 ? 2 : device.mediaCanPlay.audioChannels >= 6 ? 6 : 2
 }
 
 async function GetPalyUrl() {
@@ -362,14 +366,14 @@ async function GetPalyUrl() {
   let _data = {
     "media_guid": local.guid,
     "video_guid": StreamList.value.video_streams[0].guid,
-    "video_encoder": StreamList.value.video_streams[0].codec_name,
+    "video_encoder": "h264",
     "resolution": QualityData.value[0].resolution,
     "bitrate": StreamList.value.video_streams[0].bps,
     "startTimestamp": playInfo.value.watched_ts,
     "audio_encoder": "aac",
     "audio_guid": StreamList.value.audio_streams[0].guid,
-    "subtitle_guid": "",
-    "channels": _channels < 2 ? 2 : _channels
+    "subtitle_guid": currentSubtitle.value ? currentSubtitle.value.guid : "",
+    "channels": await GetChannels(_channels)
   };
   let res = await COMMON.requests("POST", api, true, _data)
   urlBase.value = res.play_link;

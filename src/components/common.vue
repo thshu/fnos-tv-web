@@ -18,8 +18,9 @@ function GetSigin(config) {
 
   return generateSignature({
     'method': config.method,
-    'url': "/v" + config.url,
-    'data': config.data ? config.data : {}
+    'url': "/v" + config.url.split('?')[0],
+    'data': config.data ? config.data : {},
+    'params': config.params ? config.params : {},
   }, api_key);
 }
 
@@ -118,7 +119,12 @@ async function requests(method, uri, isLogin = false, data = {}) {
   } else if (method === "PUT") {
     return await instance.put(uri, data)
   } else {
-    return await instance.get(uri)
+    let params = {}
+    if (uri.indexOf('?') !== -1) {
+      params = Object.fromEntries(new URLSearchParams(uri.split("?")[1]).entries());
+      uri = uri.split('?')[0]
+    }
+    return await instance.get(uri, {params: params})
   }
 
 }
@@ -160,6 +166,17 @@ function hashSignatureData(o = "") {
     return console.log(s),
         md5(o)
   }
+}
+
+function rc(t) {
+  return Object.prototype.toString.call(t).slice(8, -1)
+}
+
+function isUndefined$2(t) {
+  return rc(t) === "Undefined"
+}
+function isNull$1(t) {
+  return rc(t) === "Null"
 }
 
 function stringifyParams(o = {}) {
