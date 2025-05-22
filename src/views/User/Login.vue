@@ -424,6 +424,9 @@ watch(() => route.query.code, (code) => {
 .option-btn {
   flex: 1;
   min-width: 0;
+  white-space: nowrap;
+  min-width: 100px; /* 确保按钮有最小宽度 */
+  padding: 12px 16px; /* 调整内边距，使文字显示更合理 */
 }
 
 .option-btn:hover {
@@ -477,6 +480,8 @@ watch(() => route.query.code, (code) => {
   
   .option-btn {
     width: 100%;
+    min-width: 120px; /* 在移动端增加最小宽度 */
+    justify-content: center;
   }
   
   .form-control {
