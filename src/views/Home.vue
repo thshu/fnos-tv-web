@@ -1,8 +1,10 @@
 <script setup>
 import {useMediaDbData} from '../store'
-import {getCurrentInstance, onMounted, ref} from "vue";
+import {getCurrentInstance, onMounted, ref, onUnmounted, h} from "vue";
+import {useMessage, NIcon} from 'naive-ui'
 
 const MediaDbData = useMediaDbData()
+const message = useMessage()
 const per_view = ref(window.innerWidth <= 768 ? 2 : 5);
 const per_card = ref(window.innerWidth <= 768 ? 3 : 8);
 const instance = getCurrentInstance();
@@ -11,6 +13,76 @@ const COMMON = proxy.$COMMON;
 const playList = ref(null)
 const play_item_guid = ref(null);
 const EpisodeCarouselRef = ref(null);
+const showDropdown = ref(false)
+const dropdownX = ref(0)
+const dropdownY = ref(0)
+const currentContextItem = ref(null)
+
+// 渲染图标的函数
+const renderIcon = (icon) => {
+  return () => h(NIcon, null, {default: () => icon})
+}
+
+// 右键菜单选项
+const dropdownOptions = [
+  {
+    label: '继续播放',
+    key: 'continue',
+    icon: renderIcon('▶')
+  },
+  {
+    label: '从继续观看中移除',
+    key: 'remove',
+    icon: renderIcon('🗑')
+  }
+]
+
+// 处理右键菜单点击
+const handleContextMenu = (e, item) => {
+  e.preventDefault()
+  currentContextItem.value = item
+  dropdownX.value = e.clientX
+  dropdownY.value = e.clientY
+  showDropdown.value = true
+}
+
+// 处理菜单选项点击
+const handleDropdownSelect = async (key) => {
+  const item = currentContextItem.value
+  if (!item) return
+
+  switch (key) {
+    case 'continue':
+      // 跳转到播放页面
+      proxy.$router.push({
+        path: '/player',
+        query: {
+          gallery_type: item.type,
+          guid: item.parent_guid ?? item.guid
+        }
+      })
+      break
+    case 'remove':
+      try {
+        // 调用移除API
+        await COMMON.requests("DELETE", `/api/v1/play/record`, true, {
+          "item_guid": item.guid
+        })
+        message.success('已从继续观看中移除')
+        // 重新获取播放列表
+        await GetPlayList()
+      } catch (error) {
+        message.error('移除失败')
+      }
+      break
+  }
+  showDropdown.value = false
+}
+
+// 点击其他地方关闭菜单
+const handleClickOutside = () => {
+  showDropdown.value = false
+}
 
 // 监听窗口大小变化
 window.addEventListener('resize', () => {
@@ -37,13 +109,20 @@ const goPrev = () => {
 
 onMounted(async () => {
   await GetPlayList();
+  // 添加全局点击事件监听
+  document.addEventListener('click', handleClickOutside)
+})
+
+// 组件卸载时移除事件监听
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
 <template>
   <div class="content">
     <div class="card-list">
-      <div class="card-shows">
+      <div class="card-shows" v-if="playList && playList.length > 0">
         <div class="card-show-title">
           继续观看
         </div>
@@ -52,7 +131,8 @@ onMounted(async () => {
                       :loop="false" draggable>
             <div class="view-item" v-for="(item, index) in playList" :key="item.guid"
                  @mouseenter="play_item_guid = item.guid"
-                 @mouseleave="play_item_guid = null">
+                 @mouseleave="play_item_guid = null"
+                 @contextmenu="handleContextMenu($event, item)">
               <div>
                 <router-link :to="{
                     path: '/player', query: {
@@ -146,6 +226,17 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+
+    <!-- 右键菜单 -->
+    <n-dropdown
+        :show="showDropdown"
+        :options="dropdownOptions"
+        :x="dropdownX"
+        :y="dropdownY"
+        placement="bottom-start"
+        trigger="manual"
+        @select="handleDropdownSelect"
+    />
   </div>
 </template>
 
@@ -192,6 +283,7 @@ onMounted(async () => {
 
 .view-item {
   text-align: center;
+  cursor: context-menu; /* 添加右键菜单光标样式 */
 }
 
 .gallery-card .view-item {

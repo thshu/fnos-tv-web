@@ -118,6 +118,10 @@ async function requests(method, uri, isLogin = false, data = {}) {
     return await instance.post(uri, data)
   } else if (method === "PUT") {
     return await instance.put(uri, data)
+  }else if (method === "DELETE") {
+    return await instance.delete(uri, {
+      data: data
+    })
   } else {
     let params = {}
     if (uri.indexOf('?') !== -1) {
