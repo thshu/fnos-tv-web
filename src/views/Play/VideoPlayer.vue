@@ -178,9 +178,9 @@ const setting = ref({
   ],
   quality: [],
   icons: {
-    loading: '<img width="60" heigth="60" v-lazy="./images/loading.gif">',
-    state: '<img width="60" heigth="60" v-lazy="./images/play2.svg">',
-    indicator: '<img width="16" heigth="16" v-lazy="./images/indicator.svg">',
+    loading: '<img width="60" heigth="60" src="./images/loading.gif">',
+    state: '<img width="60" heigth="60" src="./images/play2.svg">',
+    indicator: '<img width="16" heigth="16" src="./images/indicator.svg">',
   },
   plugins: [
     artplayerPluginDanmuku(danmu_setting)
