@@ -205,7 +205,8 @@ const debounce = (fn, delay) => {
     }, delay);
   }
 }
-function getDanmuparams(){
+
+function getDanmuparams() {
   let episode_number = playInfo.value.episode_number === undefined ? 1 : playInfo.value.episode_number;
   let season = playInfo.value.type !== "Movie";
   let title = season ? playInfo.value.tv_title : playInfo.value.title
@@ -216,6 +217,7 @@ function getDanmuparams(){
 async function loadDanmuku() {
   danmuTitleData.value.html = `弹幕加载中...`
   art.layers.update(danmuTitleData.value)
+  let episode_number = playInfo.value.episode_number === undefined ? 1 : playInfo.value.episode_number;
   let danmuku = `/danmu/get?${getDanmuparams()}`;
   fetch(danmuku)
       .then(res => res.json())
@@ -385,8 +387,7 @@ async function GetPalyUrl() {
     urlBase.value = res.play_link;
     url.value = COMMON.fnHost + res.play_link;
     playUrl.value = window.location.origin + url.value
-  }
-  else {
+  } else {
     COMMON.ShowMsg("播放链接获取失败，请切换清晰度或尝试其他操作")
   }
 }
