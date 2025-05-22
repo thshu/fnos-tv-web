@@ -35,6 +35,7 @@ const showSetUp = ref(false)
 const timerSendPlayRecord = ref(null);
 const emojos = ref(null);
 const allDanmaku = ref({})
+const currentSubtitle = ref(null);
 const danmuTitleData = ref({
   name: "danmuTitle",
   html: "弹幕加载中...",
