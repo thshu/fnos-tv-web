@@ -373,7 +373,7 @@ async function GetPalyUrl() {
   let _data = {
     "media_guid": local.guid,
     "video_guid": StreamList.value.video_streams[0].guid,
-    "video_encoder": "h264",
+    "video_encoder": StreamList.value.video_streams[0].codec_name,
     "resolution": QualityData.value[0].resolution,
     "bitrate": StreamList.value.video_streams[0].bps,
     "startTimestamp": playInfo.value.watched_ts,
