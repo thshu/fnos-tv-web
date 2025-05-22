@@ -13,6 +13,7 @@ import artplayerPluginDanmuku from "artplayer-plugin-danmuku";
 const instance = getCurrentInstance();
 const proxy = instance.appContext.config.globalProperties;
 const COMMON = proxy.$COMMON;
+const device = proxy.$device;
 
 const PlayerData = usePlayerData()
 let art = null;
@@ -203,6 +204,9 @@ const debounce = (fn, delay) => {
     }, delay);
   }
 }
+function getDanmuparams(){
+  return `douban_id=${playInfo.value.douban_id}&episode_number=${episode_number}&title=${title}&season_number=${season_number}&season=${season}&guid=${episode_guid.value}`
+}
 
 async function loadDanmuku() {
   danmuTitleData.value.html = `弹幕加载中...`
@@ -211,7 +215,7 @@ async function loadDanmuku() {
   let season = playInfo.value.type !== "Movie";
   let title = season ? playInfo.value.tv_title : playInfo.value.title
   let season_number = season ? playInfo.value.season_number : 1
-  let danmuku = `/danmu/get?douban_id=${playInfo.value.douban_id}&episode_number=${episode_number}&title=${title}&season_number=${season_number}&season=${season}&guid=${episode_guid.value}`;
+  let danmuku = `/danmu/get?${getDanmuparams()}`;
   fetch(danmuku)
       .then(res => res.json())
       .then(json => {
@@ -344,8 +348,12 @@ async function GetPayInfo(_guid) {
 }
 
 async function GetStreamList() {
-  let api = "/api/v1/stream/list/" + episode_guid.value;
+  let api = "/api/v1/stream/list/" + episode_guid.value + '?before_play=1';
   StreamList.value = await COMMON.requests("GET", api, true)
+}
+
+async function GetChannels(s) {
+  return s < 6 ? 2 : device.mediaCanPlay.audioChannels >= 6 ? 6 : 2
 }
 
 async function GetPalyUrl() {
@@ -355,26 +363,31 @@ async function GetPalyUrl() {
   let api = "/api/v1/play/play"
   let _channels = (StreamList.value.audio_streams.length !== 1 && StreamList.value.audio_streams.find(o => o.codec_name === "aac") !== undefined ? StreamList.value.audio_streams.find(o => o.codec_name === "aac") : StreamList.value.audio_streams[0]).channels;
   let regex = /\d+-\d+-\S+/;
-  let local = StreamList.value.files.find(o=>!regex.test(o.path))
-  if(local === null || local === undefined) {
+  let local = StreamList.value.files.find(o => !regex.test(o.path))
+  if (local === null || local === undefined) {
     local = StreamList.value.files[0];
   }
   let _data = {
     "media_guid": local.guid,
     "video_guid": StreamList.value.video_streams[0].guid,
-    "video_encoder": StreamList.value.video_streams[0].codec_name,
+    "video_encoder": "h264",
     "resolution": QualityData.value[0].resolution,
     "bitrate": StreamList.value.video_streams[0].bps,
     "startTimestamp": playInfo.value.watched_ts,
     "audio_encoder": "aac",
     "audio_guid": StreamList.value.audio_streams[0].guid,
-    "subtitle_guid": "",
-    "channels": _channels < 2 ? 2 : _channels
+    "subtitle_guid": currentSubtitle.value ? currentSubtitle.value.guid : "",
+    "channels": await GetChannels(_channels)
   };
   let res = await COMMON.requests("POST", api, true, _data)
-  urlBase.value = res.play_link;
-  url.value = COMMON.fnHost + res.play_link;
-  playUrl.value = window.location.origin + url.value
+  if (res !== null) {
+    urlBase.value = res.play_link;
+    url.value = COMMON.fnHost + res.play_link;
+    playUrl.value = window.location.origin + url.value
+  }
+  else {
+    COMMON.ShowMsg("播放链接获取失败，请切换清晰度或尝试其他操作")
+  }
 }
 
 async function SendPlayRecord() {
@@ -420,7 +433,7 @@ async function mediaP(req, playLink) {
 
 async function GetEmoji() {
   try {
-    let api = "/danmu/getEmoji?douban_id=" + playInfo.value.douban_id
+    let api = "/danmu/getEmoji?" + getDanmuparams()
     let res = await fetch(api)
     let res_json = await res.json()
     emojos.value = res_json
@@ -554,7 +567,7 @@ async function UpdateControl(_art) {
     },
   }
   倍速.selector.forEach(item => {
-    if (item.html === art.playbackRate){
+    if (item.html === art.playbackRate) {
       item.default = true;
     }
   })

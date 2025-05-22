@@ -5,6 +5,7 @@ import App from './App.vue'
 import VueCookies from 'vue-cookies';
 import naive from 'naive-ui'
 import global from './components/common.vue'
+import device from './components/device.vue'
 import router from './router'
 import { createPinia } from 'pinia'
 import Snackbar from 'node-snackbar';
@@ -30,6 +31,7 @@ app.use(router)
 app.use(pinia)
 
 app.config.globalProperties.$COMMON = global;
+app.config.globalProperties.$device = device;
 
 app.mount('#app')
 
