@@ -9,6 +9,7 @@ import VueCookies from "vue-cookies";
 import {usePlayerData} from "@/store.js";
 import sortedIndexBy from 'lodash-es/sortedIndexBy'
 import artplayerPluginDanmuku from "artplayer-plugin-danmuku";
+import axios from "axios";
 
 const instance = getCurrentInstance();
 const proxy = instance.appContext.config.globalProperties;
@@ -36,6 +37,8 @@ const timerSendPlayRecord = ref(null);
 const emojos = ref(null);
 const allDanmaku = ref({})
 const currentSubtitle = ref(null);
+const use302Play = localStorage.getItem('use_302_play');
+const use_302_play = ref(use302Play === null ? false : use302Play === 'true')
 const danmuTitleData = ref({
   name: "danmuTitle",
   html: "弹幕加载中...",
@@ -359,6 +362,24 @@ async function GetChannels(s) {
   return s < 6 ? 2 : device.mediaCanPlay.audioChannels >= 6 ? 6 : 2
 }
 
+async function GetPalyUrlBy302() {
+  let regex = /\d+-\d+-\S+/;
+  debugger
+  // 获取远程挂载的视频信息
+  let remote = StreamList.value.files.find(o => regex.test(o.path))
+  if (remote !== null && use_302_play.value) {
+    /// TODO 处理302的逻辑
+    let _data = {
+      path: remote.path
+    }
+    let res = await axios.get("/api/play", {params: _data})
+    if (res.data.code === 0) {
+      url.value = res.data.data;
+      playUrl.value = res.data.data
+    }
+  }
+}
+
 async function GetPalyUrl() {
   if (art !== null && art !== undefined) {
     art.loading.show = true;
@@ -387,6 +408,9 @@ async function GetPalyUrl() {
     urlBase.value = res.play_link;
     url.value = COMMON.fnHost + res.play_link;
     playUrl.value = window.location.origin + url.value
+    if(use_302_play.value){
+      await GetPalyUrlBy302();
+    }
   } else {
     COMMON.ShowMsg("播放链接获取失败，请切换清晰度或尝试其他操作")
   }
@@ -634,6 +658,29 @@ async function UpdateControl(_art) {
       return nextState;
     },
   })
+  await addArtConfig(_art, 'setting', {
+    name: '是否开启302',
+    html: '是否开启302',
+    tooltip: use_302_play.value ? '开启' : '关闭',
+    switch: use_302_play.value,
+    onSwitch: async function (item, $dom, event) {
+      use_302_play.value = !item.switch;
+      localStorage.use_302_play = use_302_play.value
+      if (use_302_play.value) {
+        await GetPalyUrlBy302();
+      }
+      if(!use_302_play.value){
+        url.value = COMMON.fnHost + urlBase.value;
+        playUrl.value = window.location.origin + url.value
+      }
+      if (art) {
+        await art.switchUrl(url.value);
+      }
+      item.tooltip = use_302_play.value ? '开启' : '关闭';
+      return use_302_play.value;
+    },
+  })
+
 }
 
 async function play() {
