@@ -364,15 +364,16 @@ async function GetChannels(s) {
 
 async function GetPalyUrlBy302() {
   let regex = /\d+-\d+-\S+/;
-  debugger
   // 获取远程挂载的视频信息
   let remote = StreamList.value.files.find(o => regex.test(o.path))
   if (remote !== null && use_302_play.value) {
-    /// TODO 处理302的逻辑
     let _data = {
       path: remote.path
     }
-    let res = await axios.get("/api/play", {params: _data})
+    let res = await axios.get("/api/play", {
+      params: _data,
+      headers: {Authorization: VueCookies.get("authorization")}
+    })
     if (res.data.code === 0) {
       url.value = res.data.data;
       playUrl.value = res.data.data
@@ -408,7 +409,7 @@ async function GetPalyUrl() {
     urlBase.value = res.play_link;
     url.value = COMMON.fnHost + res.play_link;
     playUrl.value = window.location.origin + url.value
-    if(use_302_play.value){
+    if (use_302_play.value) {
       await GetPalyUrlBy302();
     }
   } else {
@@ -669,7 +670,7 @@ async function UpdateControl(_art) {
       if (use_302_play.value) {
         await GetPalyUrlBy302();
       }
-      if(!use_302_play.value){
+      if (!use_302_play.value) {
         url.value = COMMON.fnHost + urlBase.value;
         playUrl.value = window.location.origin + url.value
       }
