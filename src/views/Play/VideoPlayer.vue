@@ -500,7 +500,7 @@ async function putVideoConfig() {
         Authorization: VueCookies.get("authorization")
       },
     })
-    let res_json = await res.json()
+    let res_json = await res.data
     skipList.value = sendData.list
     seasonConfig.value = sendData
     art.plugins.artplayerPluginDanmuku.load();
@@ -515,7 +515,7 @@ async function getVideoConfig() {
   try {
     let api = "/api/videoConfig?episode_guid=" + episode_guid.value + "&guid=" + guid.value
     let res = await axios.get(api, {headers: {Authorization: VueCookies.get("authorization")}})
-    seasonConfig.value = await res.json();
+    seasonConfig.value = await res.data;
     skipList.value = seasonConfig.value.list
   } catch (err) {
   }
