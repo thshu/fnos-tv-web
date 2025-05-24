@@ -494,12 +494,11 @@ async function putVideoConfig() {
   }
   try {
     let api = "/api/videoConfig?episode_guid=" + episode_guid.value + "&guid=" + guid.value
-    let res = await fetch(api, {
-      method: 'POST', // 请求方法
+    let res = await axios.post(api, sendData, {
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: VueCookies.get("authorization")
       },
-      body: JSON.stringify(sendData) // 请求体内容
     })
     let res_json = await res.json()
     skipList.value = sendData.list
@@ -515,7 +514,7 @@ async function putVideoConfig() {
 async function getVideoConfig() {
   try {
     let api = "/api/videoConfig?episode_guid=" + episode_guid.value + "&guid=" + guid.value
-    let res = await fetch(api)
+    let res = await axios.get(api, {headers: {Authorization: VueCookies.get("authorization")}})
     seasonConfig.value = await res.json();
     skipList.value = seasonConfig.value.list
   } catch (err) {
