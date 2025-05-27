@@ -52,7 +52,7 @@ async function GetPayInfo() {
     "item_guid": guid.value
   }
   playInfo.value = await COMMON.requests("POST", api, true, _data);
-  play_guid.value = playInfo.value.item.parent_guid;
+  play_guid.value = playInfo.value.item.parent_guid===''?guid.value:playInfo.value.item.parent_guid??guid.value;
 }
 
 async function GetPersonList() {
