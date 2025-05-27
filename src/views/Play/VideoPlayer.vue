@@ -666,6 +666,8 @@ async function UpdateControl(_art) {
     onSwitch: async function (item, $dom, event) {
       use_302_play.value = !item.switch;
       localStorage.use_302_play = use_302_play.value
+      let _url = url.value;
+      let _currentTime = art.currentTime;
       if (use_302_play.value) {
         await GetPalyUrlBy302();
       }
@@ -673,8 +675,9 @@ async function UpdateControl(_art) {
         url.value = COMMON.fnHost + urlBase.value;
         playUrl.value = window.location.origin + url.value
       }
-      if (art) {
+      if (art && _url !== url.value) {
         await art.switchUrl(url.value);
+        art.currentTime = _currentTime;
       }
       item.tooltip = use_302_play.value ? '开启' : '关闭';
       return use_302_play.value;
