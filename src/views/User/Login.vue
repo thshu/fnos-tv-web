@@ -59,7 +59,7 @@ async function NasLogin(code) {
 // 检查二维码登录状态
 async function checkQrLoginStatus() {
   if (!qrCode.value) return;
-  
+
   try {
     let api = `/api/v1/logincode/${qrCode.value}`
     let res = await COMMON.requests("GET", api, false)
@@ -67,7 +67,7 @@ async function checkQrLoginStatus() {
       // 登录成功，清除定时器
       clearInterval(qrCheckTimer.value)
       qrCheckTimer.value = null
-      
+
       // 设置token并跳转
       VueCookies.set('authorization', res.token, -1)
       COMMON.ShowMsg('登录成功！')
@@ -85,7 +85,7 @@ function startQrLoginCheck() {
     clearInterval(qrCheckTimer.value)
     qrCheckTimer.value = null
   }
-  
+
   // 每2秒检查一次登录状态
   qrCheckTimer.value = setInterval(checkQrLoginStatus, 2000)
 }
@@ -441,58 +441,58 @@ watch(() => route.query.code, (code) => {
   .container {
     padding: 12px;
   }
-  
+
   .md-card.login-card {
     width: 100%;
     max-width: 320px;
     padding: 16px;
     margin: 0 12px;
   }
-  
+
   .header .title {
     font-size: 24px;
   }
-  
+
   .card-title {
     font-size: 20px;
   }
-  
+
   .qr-code {
     width: 200px !important;
     height: 200px !important;
     padding: 8px;
   }
-  
+
   .qr-code canvas {
     width: 200px !important;
     height: 200px !important;
   }
-  
+
   .qr-wrapper.loading {
     width: 200px;
     height: 200px;
   }
-  
+
   .login-options {
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .option-btn {
     width: 100%;
     min-width: 120px; /* 在移动端增加最小宽度 */
     justify-content: center;
   }
-  
+
   .form-control {
     margin-bottom: 12px;
   }
-  
+
   .form-control input {
     font-size: 16px;
     padding: 12px 12px 12px 40px;
   }
-  
+
   .btn {
     height: 44px;
     font-size: 15px;
@@ -504,25 +504,25 @@ watch(() => route.query.code, (code) => {
   .md-card.login-card {
     padding: 12px;
   }
-  
+
   .header .title {
     font-size: 22px;
   }
-  
+
   .card-title {
     font-size: 18px;
   }
-  
+
   .qr-code {
     width: 180px !important;
     height: 180px !important;
   }
-  
+
   .qr-code canvas {
     width: 180px !important;
     height: 180px !important;
   }
-  
+
   .qr-wrapper.loading {
     width: 180px;
     height: 180px;

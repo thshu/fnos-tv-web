@@ -521,6 +521,39 @@ async function getVideoConfig() {
   }
 }
 
+
+// 添加字幕切换函数
+async function switchSubtitle(item, $dom, event) {
+  debugger
+  if (!item || !item.guid) {
+    // 关闭字幕
+    currentSubtitle.value = "";
+  } else {
+    currentSubtitle.value = item;
+  }
+  var api = '/api/v1/media/p'
+  let data = {
+    "req": "media.resetSubtitle",
+    "reqid": "1234567890ABCDEF",
+    "playLink": urlBase.value,
+    "startTimestamp": 1783,
+    "subtitleIndex": item.index
+  }
+  let res = await COMMON.requests("POST", api, true, data)
+  if (res.updateM3u8) {
+    // 重新获取播放地址
+    await GetPalyUrl();
+    if (art) {
+      await art.switchUrl(url.value);
+    }
+  }
+  if (art) {
+    const subtitle_url = '/fnos' + urlBase.value.replace("preset", "subtitle");
+    art.subtitle.switch(subtitle_url)
+  }
+  return item.html
+}
+
 async function addArtConfig(_art, key, v) {
   try {
     _art[key].remove(v.name)
@@ -598,6 +631,31 @@ async function UpdateControl(_art) {
     }
   })
   forData.push(倍速)
+
+  // 添加字幕选择器
+  if (StreamList.value && StreamList.value.subtitle_streams && StreamList.value.subtitle_streams.length > 0) {
+    const subtitleControl = {
+      disable: (!art.fullscreen && COMMON.isMo),
+      index: 3,
+      name: '字幕',
+      position: 'right',
+      html: '字幕',
+      selector: [
+        {
+          html: '关闭字幕',
+          guid: null
+        },
+        ...[...new Map(StreamList.value.subtitle_streams.map(item => [item.index, item])).values()].map(sub => ({
+          html: sub.title + sub.language,
+          guid: sub.guid,
+          default: sub.is_default === 1,
+          index: sub.index
+        }))
+      ],
+      onSelect: switchSubtitle
+    };
+    forData.push(subtitleControl);
+  }
 
   if (EpisodeList.value !== null && EpisodeList.value.length > 0) {
     let 下一集 = {
@@ -698,6 +756,13 @@ async function play() {
   let _PayInfo = await GetPayInfo(episode_guid.value);
   playInfo.value = _PayInfo.item;
   await GetStreamList();
+
+  // 初始化字幕
+  if (StreamList.value && StreamList.value.subtitle_streams && StreamList.value.subtitle_streams.length > 0) {
+    const defaultSubtitle = StreamList.value.subtitle_streams.find(sub => sub.is_default === 1);
+    currentSubtitle.value = defaultSubtitle || null;
+  }
+
   await GetQuality();
   await GetPalyUrl();
   await GetEmoji();
@@ -724,6 +789,11 @@ async function ready() {
   art.loading.show = false;
   timerSendPlayRecord.value = setInterval(SendPlayRecord, 10000)
   art.seek = playInfo.value.watched_ts
+
+  if (currentSubtitle.value) {
+    const subtitle_url = '/fnos' + urlBase.value.replace("preset", "subtitle");
+    art.subtitle.switch(subtitle_url)
+  }
 
   danmuConfig.value.loadedUntil = playInfo.value.watched_ts;
   art.layers.update(danmuTitleData.value)
