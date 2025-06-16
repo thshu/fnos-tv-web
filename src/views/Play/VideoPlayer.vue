@@ -10,6 +10,7 @@ import {usePlayerData} from "@/store.js";
 import sortedIndexBy from 'lodash-es/sortedIndexBy'
 import artplayerPluginDanmuku from "artplayer-plugin-danmuku";
 import axios from "axios";
+import {createBlobVTTUrl, M3U8SubtitlePlugin} from "./subtitle.js"
 
 const instance = getCurrentInstance();
 const proxy = instance.appContext.config.globalProperties;
@@ -39,6 +40,7 @@ const allDanmaku = ref({})
 const currentSubtitle = ref(null);
 const use302Play = localStorage.getItem('use_302_play');
 const use_302_play = ref(use302Play === null ? false : use302Play === 'true')
+let vttUrls = ref([])
 const danmuTitleData = ref({
   name: "danmuTitle",
   html: "弹幕加载中...",
@@ -549,7 +551,7 @@ async function switchSubtitle(item, $dom, event) {
   }
   if (art) {
     const subtitle_url = '/fnos' + urlBase.value.replace("preset", "subtitle");
-    art.subtitle.switch(subtitle_url)
+    switchSubtitleUrl(subtitle_url)
   }
   return item.html
 }
@@ -780,6 +782,12 @@ async function play_next() {
   await play()
 }
 
+function switchSubtitleUrl(m3u8Url) {
+  M3U8SubtitlePlugin(m3u8Url).then(r => {
+    vttUrls.value = r
+  })
+}
+
 
 async function ready() {
   if (timerSendPlayRecord.value !== null) {
@@ -792,7 +800,7 @@ async function ready() {
 
   if (currentSubtitle.value) {
     const subtitle_url = '/fnos' + urlBase.value.replace("preset", "subtitle");
-    art.subtitle.switch(subtitle_url)
+    switchSubtitleUrl(subtitle_url)
   }
 
   danmuConfig.value.loadedUntil = playInfo.value.watched_ts;
@@ -867,9 +875,9 @@ const artF = async (data) => {
 
     // 弹幕分段加载
     let episode_number = playInfo.value.episode_number === undefined ? 1 : playInfo.value.episode_number;
+    let current = art.currentTime;
     if (episode_number in allDanmaku.value) {
       let danmuList = allDanmaku.value[episode_number];
-      let current = art.currentTime;
       if (current >= danmuConfig.value.loadedUntil) {
         // 避免重复加载同一段
         if (danmuConfig.value.loadedUntil === lastDanmuLoadedUntil) return;
@@ -890,8 +898,84 @@ const artF = async (data) => {
         }
         danmuConfig.value.loadedUntil = endTime;
       }
+
+
     }
   });
+
+  let lastSubtitleIndex = -1;
+  let vttText = '';
+  let currentBlobUrl = null;
+  const cache = new Map();
+
+  // 带重试的 fetch
+  async function fetchWithRetry(url, options = {}, retries = 3, delay = 500) {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const res = await fetch(url, options);
+        if (res.ok) {
+          return res;
+        } else {
+          console.warn(`Fetch ${url} 返回 ${res.status}，第 ${i+1} 次重试`);
+        }
+      } catch (err) {
+        console.warn(`Fetch ${url} 出错，第 ${i+1} 次重试：`, err);
+      }
+      // 等待
+      await new Promise(r => setTimeout(r, delay));
+    }
+    throw new Error(`Fetch ${url} 失败，超过 ${retries} 次重试`);
+  }
+
+  async function loadSegment(i) {
+    if (cache.has(i)) return cache.get(i);
+    let vttUrl = vttUrls.value[i]
+    if (vttUrl === undefined) return ""
+    const res = await fetchWithRetry(vttUrl, {}, 3, 500);
+    const text = await res.text();
+    let clean;
+    if (vttText === '') {
+      // 第 0 段保留头部
+      clean = text.trim() + '\n\n';
+    } else {
+      // 去掉头部及任何前导空行
+      clean = text.replace(/^WEBVTT[^\n]*\n*/i, '')
+          .trim() + '\n\n';
+    }
+    cache.set(i, clean);
+    return clean;
+  }
+
+  function updateSubtitle() {
+    const nowIndex = Math.floor(art.currentTime / 6);
+    if (nowIndex > lastSubtitleIndex || lastSubtitleIndex === -1) {
+      // 如果是回退
+      if (nowIndex < lastSubtitleIndex) {
+        vttText = '';
+        lastSubtitleIndex = -1;
+      }
+      lastSubtitleIndex = nowIndex;
+      loadSegment(nowIndex).then(clean => {
+        vttText += clean;
+        // 预加载下一个
+        loadSegment(nowIndex + 1).catch(() => {
+        });
+        // 释放旧 URL
+        if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+        currentBlobUrl = createBlobVTTUrl(vttText);
+        art.subtitle.switch(currentBlobUrl);
+      }).catch(err => console.error('字幕加载失败', err));
+    }
+  }
+
+  art.on('video:timeupdate', updateSubtitle);
+  // 监听用户 seek
+  art.on('video:seeked', () => {
+    lastSubtitleIndex = -1;
+    vttText = '';
+  });
+
+
   art.on('video:ended', () => {
     play_next()
   });
