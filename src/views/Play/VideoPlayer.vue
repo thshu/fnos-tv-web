@@ -913,9 +913,10 @@ const artF = async (data) => {
   });
 
   let lastSubtitleIndex = -1;
-  let vttText = '';
+  let vttText = 'WEBVTT\n\nX-TIMESTAMP-MAP=MPEGTS:0,LOCAL:00:00:00.000';   // ← 预置一个干净的头
   let currentBlobUrl = null;
   const cache = new Map();
+  const addedIndexes = new Set(); // 防止重复添加段
 
   // 带重试的 fetch
   async function fetchWithRetry(url, options = {}, retries = 3, delay = 500) {
@@ -925,10 +926,10 @@ const artF = async (data) => {
         if (res.ok) {
           return res;
         } else {
-          console.warn(`Fetch ${url} 返回 ${res.status}，第 ${i+1} 次重试`);
+          console.warn(`Fetch ${url} 返回 ${res.status}，第 ${i + 1} 次重试`);
         }
       } catch (err) {
-        console.warn(`Fetch ${url} 出错，第 ${i+1} 次重试：`, err);
+        console.warn(`Fetch ${url} 出错，第 ${i + 1} 次重试：`, err);
       }
       // 等待
       await new Promise(r => setTimeout(r, delay));
@@ -938,33 +939,41 @@ const artF = async (data) => {
 
   async function loadSegment(i) {
     if (cache.has(i)) return cache.get(i);
-    let vttUrl = vttUrls.value[i]
-    if (vttUrl === undefined) return ""
+    const vttUrl = vttUrls.value[i];
+    if (!vttUrl) return '';
+
     const res = await fetchWithRetry(vttUrl, {}, 3, 500);
     const text = await res.text();
-    let clean;
-    if (vttText === '') {
-      // 第 0 段保留头部
-      clean = text.trim() + '\n\n';
-    } else {
-      // 去掉头部及任何前导空行
-      clean = text.replace(/^WEBVTT[^\n]*\n*/i, '')
-          .trim() + '\n\n';
-    }
+
+    // 1)丢掉头部
+    const parts = text.split(/\r?\n\r?\n/);
+    const payload = parts.slice(1).join('\n\n').trim();
+    const clean = payload ? (payload + '\n\n') : '';
+
     cache.set(i, clean);
     return clean;
   }
 
   function updateSubtitle() {
     const nowIndex = Math.floor(art.currentTime / 6);
-    if (nowIndex > lastSubtitleIndex || lastSubtitleIndex === -1) {
-      // 如果是回退
-      if (nowIndex < lastSubtitleIndex) {
-        vttText = '';
-        lastSubtitleIndex = -1;
+    // 如果是回退
+    if (nowIndex < lastSubtitleIndex) {
+      vttText = 'WEBVTT\n\nX-TIMESTAMP-MAP=MPEGTS:0,LOCAL:00:00:00.000';
+      lastSubtitleIndex = -1;
+      addedIndexes.clear();
+      if (currentBlobUrl) {
+        URL.revokeObjectURL(currentBlobUrl);
+        currentBlobUrl = null;
       }
+    }
+    if (nowIndex > lastSubtitleIndex) {
       lastSubtitleIndex = nowIndex;
+      // 跳过已加载段
+      if (addedIndexes.has(nowIndex)) return;
       loadSegment(nowIndex).then(clean => {
+        if (!clean) return;
+        // 只添加未加载的内容
+        addedIndexes.add(nowIndex);
         vttText += clean;
         // 预加载下一个
         loadSegment(nowIndex + 1).catch(() => {
@@ -975,13 +984,14 @@ const artF = async (data) => {
         art.subtitle.switch(currentBlobUrl);
       }).catch(err => console.error('字幕加载失败', err));
     }
+
   }
 
   art.on('video:timeupdate', updateSubtitle);
   // 监听用户 seek
   art.on('video:seeked', () => {
     lastSubtitleIndex = -1;
-    vttText = '';
+    vttText = 'WEBVTT\n\nX-TIMESTAMP-MAP=MPEGTS:0,LOCAL:00:00:00.000';
   });
 
 
