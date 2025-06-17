@@ -99,7 +99,16 @@ const setting = ref({
   id: "",
   customType: {
     m3u8: function (video, url) {
-      var hls = new Hls()
+      const hls = new Hls({
+        enableWebVTT: false, // 仍然关闭 WebVTT 的原生渲染
+        xhrSetup: (xhr, reqUrl) => {
+          if (reqUrl.endsWith('.vtt')) {
+            // 在真正发送前就中断请求
+            xhr.abort();
+          }
+          // 还可以在这里对其他请求做自定义头等处理
+        },
+      });
       hls.loadSource(url)
       hls.attachMedia(video)
     },
