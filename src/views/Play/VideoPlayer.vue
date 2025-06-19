@@ -377,7 +377,7 @@ async function GetPalyUrlBy302() {
   let regex = /\d+-\d+-\S+/;
   // 获取远程挂载的视频信息
   let remote = StreamList.value.files.find(o => regex.test(o.path))
-  if (remote !== null && use_302_play.value) {
+  if (remote !== null && remote !== undefined && use_302_play.value) {
     let _data = {
       path: remote.path
     }

@@ -1,7 +1,7 @@
 <script setup>
 import {useMediaDbData} from '../store'
 import {getCurrentInstance, onMounted, ref, onUnmounted, h} from "vue";
-import {useMessage, NIcon} from 'naive-ui'
+import {useMessage, NIcon, NProgress} from 'naive-ui'
 
 const MediaDbData = useMediaDbData()
 const message = useMessage()
@@ -143,6 +143,15 @@ onUnmounted(() => {
                   <img v-if="item.poster.length > 0" loading="lazy" class='gallery-img'
                        v-lazy='COMMON.imgUrl + item.poster' style="border-radius:10px">
                   <img v-else loading="lazy" class='gallery-img' v-lazy="'/images/not_gellery.png'">
+                  <!-- 进度条：仅当duration和ts存在且duration>0时显示 -->
+                  <n-progress
+                    v-if="item.duration && item.ts && item.duration > 0"
+                    type="line"
+                    :percentage="Math.min(100, Math.floor(item.ts / item.duration * 100))"
+                    :height="3"
+                    :show-indicator="false"
+                    style="margin-top: 1px; border-radius: 2px;"
+                  />
                   <!-- 播放图标 (仅在 hover 时显示) -->
                   <div v-if="play_item_guid === item.guid" class="play-icon">
                     <i class="bx bx-play"></i>
@@ -460,6 +469,7 @@ img.carousel-img {
 /* 鼠标悬浮时放大 */
 .view-item:hover .gallery-img {
   transform: scale(1.05);
+  border-radius: 10px !important;
 }
 
 /* 播放按钮 */
@@ -575,5 +585,10 @@ img.carousel-img {
     height: 36px;
     font-size: 20px;
   }
+}
+
+.gallery-img {
+  border-radius: 10px !important;
+  transition: transform 0.3s;
 }
 </style>
