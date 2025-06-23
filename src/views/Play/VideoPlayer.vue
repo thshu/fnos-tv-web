@@ -222,10 +222,11 @@ const debounce = (fn, delay) => {
 
 function getDanmuparams() {
   let episode_number = playInfo.value.episode_number === undefined ? 1 : playInfo.value.episode_number;
+  let episode_title = playInfo.value.title;
   let season = playInfo.value.type !== "Movie";
   let title = season ? playInfo.value.tv_title : playInfo.value.title
   let season_number = season ? playInfo.value.season_number : 1
-  return `douban_id=${playInfo.value.douban_id}&episode_number=${episode_number}&title=${title}&season_number=${season_number}&season=${season}&guid=${episode_guid.value}`
+  return `douban_id=${playInfo.value.douban_id}&episode_number=${episode_number}&episode_title=${episode_title}&title=${title}&season_number=${season_number}&season=${season}&guid=${episode_guid.value}`
 }
 
 async function loadDanmuku() {
@@ -884,19 +885,18 @@ const artF = async (data) => {
 
     // 弹幕分段加载
     let episode_number = playInfo.value.episode_number === undefined ? 1 : playInfo.value.episode_number;
-    let current = art.currentTime;
     if (episode_number in allDanmaku.value) {
       let danmuList = allDanmaku.value[episode_number];
-      if (current >= danmuConfig.value.loadedUntil) {
+      if (currentTime >= danmuConfig.value.loadedUntil) {
         // 避免重复加载同一段
         if (danmuConfig.value.loadedUntil === lastDanmuLoadedUntil) return;
         lastDanmuLoadedUntil = danmuConfig.value.loadedUntil;
 
         if (
             danmuConfig.value.loadedUntil === 0 ||
-            (current - danmuConfig.value.loadedUntil) > (danmuConfig.value.segmentDuration * 2)
+            (currentTime - danmuConfig.value.loadedUntil) > (danmuConfig.value.segmentDuration * 2)
         ) {
-          danmuConfig.value.loadedUntil = current - 5;
+          danmuConfig.value.loadedUntil = currentTime - 5;
         }
         const startTime = danmuConfig.value.loadedUntil;
         const endTime = startTime + danmuConfig.value.segmentDuration;
