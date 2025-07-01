@@ -226,7 +226,7 @@ function getDanmuparams() {
   let season = playInfo.value.type !== "Movie";
   let title = season ? playInfo.value.tv_title : playInfo.value.title
   let season_number = season ? playInfo.value.season_number : 1
-  return `douban_id=${playInfo.value.douban_id}&episode_number=${episode_number}&episode_title=${episode_title}&title=${title}&season_number=${season_number}&season=${season}&guid=${episode_guid.value}`
+  return `douban_id=${playInfo.value.douban_id}&episode_number=${episode_number}&episode_title=${episode_title}&title=${title}&season_number=${season_number}&season=${season}&guid=${episode_guid.value}&parent_guid=${guid.value}`
 }
 
 async function loadDanmuku() {
