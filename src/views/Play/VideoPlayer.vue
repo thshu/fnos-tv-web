@@ -782,7 +782,7 @@ async function play() {
 
   await GetQuality();
   await GetPalyUrl();
-  await GetEmoji();
+  GetEmoji();
   if (art !== null) {
     await art.switchUrl(url.value);
   }
