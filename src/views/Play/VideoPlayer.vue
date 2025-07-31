@@ -250,8 +250,13 @@ async function loadDanmuku() {
 // 获取清晰度
 async function GetQuality() {
   let api = "/api/v1/play/quality"
+  let regex = /\d+-\d+-\S+/;
+  let local = StreamList.value.files.find(o => !regex.test(o.path))
+  if (local === null || local === undefined) {
+    local = StreamList.value.files[0];
+  }
   let _data = {
-    "media_guid": StreamList.value.video_streams[0].media_guid
+    "media_guid": local.guid
   }
   let res = await COMMON.requests("POST", api, true, _data);
   QualityData.value = res;
@@ -777,7 +782,7 @@ async function play() {
 
   await GetQuality();
   await GetPalyUrl();
-  await GetEmoji();
+  GetEmoji();
   if (art !== null) {
     await art.switchUrl(url.value);
   }
