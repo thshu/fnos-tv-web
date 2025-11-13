@@ -34,6 +34,7 @@ async function LoginUser() {
   let api = "/api/v1/login"
   let res = await COMMON.requests("POST", api, false, user.value)
   VueCookies.set('authorization', res.token, -1)
+  VueCookies.set('Trim-MC-token', res.token, -1)
   COMMON.ShowMsg('登录成功！')
   await router.push('/');
 }
