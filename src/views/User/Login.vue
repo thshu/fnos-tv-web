@@ -47,6 +47,7 @@ async function NasLogin(code) {
   }
   let res = await COMMON.requests("POST", api, false, data)
   VueCookies.set('authorization', res.token, -1)
+  VueCookies.set('Trim-MC-token', res.token, -1)
   COMMON.ShowMsg('登录成功！')
   // 打开名为 home 的窗口（若存在，就返回它的引用）
   const parentWin = window.open('', 'home');
@@ -71,6 +72,7 @@ async function checkQrLoginStatus() {
 
       // 设置token并跳转
       VueCookies.set('authorization', res.token, -1)
+      VueCookies.set('Trim-MC-token', res.token, -1)
       COMMON.ShowMsg('登录成功！')
       await router.push('/')
     }
